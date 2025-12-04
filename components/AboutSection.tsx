@@ -45,7 +45,7 @@ export default function AboutSection() {
                         </CardTitle>
                     </CardHeader>
                     <CardContent className="text-gray-600 text-sm">
-                        AI-Powered Virtual Fashion Assistant & Smart Try-On System
+                        Wearify - AI-Powered Virtual Try-On System 
                     </CardContent>
                 </Card>
 
@@ -64,10 +64,10 @@ export default function AboutSection() {
                         </CardTitle>
                     </CardHeader>
                     <CardContent className="text-gray-600 text-sm space-y-2">
-                        <p><span className="font-semibold text-gray-700">Member 1:</span> Usman Ali – ID</p>
-                        <p><span className="font-semibold text-gray-700">Member 2:</span> Adil Usman – ID</p>
-                        <p><span className="font-semibold text-gray-700">Member 3:</span> Syed Rohan Shah  – ID</p>
-                        <p><span className="font-semibold text-gray-700">Member 4:</span> Hadia – ID</p>
+                        <p><span className="font-semibold text-gray-700">Member 1:</span> Usman Ali – [23237]</p>
+                        <p><span className="font-semibold text-gray-700">Member 2:</span> Adil Usman – [23151]</p>
+                        <p><span className="font-semibold text-gray-700">Member 3:</span> Syed Rohan Shah  – [23166]</p>
+                        <p><span className="font-semibold text-gray-700">Member 4:</span> Hadia Rafiq– [25195]</p>
                         <p className="pt-1 text-gray-500 text-xs">(B.S. Computer Science — Iqra University)</p>
                     </CardContent>
                 </Card>
@@ -76,7 +76,7 @@ export default function AboutSection() {
                 <Card className="shadow-md border-pink-200/60 bg-white hover:scale-105 duration-300"
                     style={{
                         background: "linear-gradient(135deg, #FDF3F8 0%, #FFFFFF 100%)",
-                    }}  
+                    }}
                 >
                     <CardHeader>
                         <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-gradient-to-r from-[#A86CE3] to-[#EF5BA1] text-white shadow-md">
@@ -87,7 +87,7 @@ export default function AboutSection() {
                         </CardTitle>
                     </CardHeader>
                     <CardContent className="text-gray-600 text-sm">
-                        <p className="font-semibold text-gray-800">Sir Saad Ahmed</p>
+                        <p className="font-semibold text-gray-800">Dr. Saad Ahmed</p>
                         <p>Head of Department – Computer Science</p>
                         <p>Iqra University</p>
                     </CardContent>
