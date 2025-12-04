@@ -40,7 +40,9 @@ export default function HeroSection() {
                             bg-gradient-to-r from-[#9734E6] to-[#E8479C] shadow-md hover:scale-105  duration-300"
                         >
                             <FontAwesomeIcon icon={faCamera} className="w-3 h-3" />
-                            Start Virtual Try-On
+                            <a href="#tryon">
+                                Start Virtual Try-On
+                            </a>
                         </Button>
 
                         <Button

@@ -6,6 +6,7 @@ import AiPoweredFeatures from "@/components/AiPoweredFeatures"
 import HowItWorksSection from "@/components/HowItWorksSection"
 import VirtualTryOnGallery from "@/components/VirtualTryOnGallery"
 import Footer from "@/components/Footer";
+import AboutSection from "@/components/AboutSection"
 
 
 export default function Home() {
@@ -18,7 +19,7 @@ export default function Home() {
         <VirtualTryOnSection />
       </section>
       <section id="about">
-        <AiPoweredFeatures />
+        <AboutSection />
       </section>
       <section id="howitwork">
         <HowItWorksSection />
@@ -26,6 +27,8 @@ export default function Home() {
       <section id="collection">
         <VirtualTryOnGallery />
       </section>
+        <AiPoweredFeatures />
+
       <Footer />
 
     </div>

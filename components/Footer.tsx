@@ -11,7 +11,7 @@ import {
 
 export default function Footer() {
     return (
-        <footer className="w-full" style={{ backgroundColor: "#FFE4EB" }}>
+        <footer className="w-full bg-gradient-to-r from-[#C8B8FF] to-[#E9D2E7]/20" >
             <div className="max-w-7xl mx-auto px-6 lg:px-8 py-10">
 
                 {/* === TOP GRID === */}

@@ -14,7 +14,7 @@ export default function Header() {
 
     // Detect visible section
     useEffect(() => {
-        const sections = ["home", "about", "howitwork", "collection"];
+        const sections = ["home", "tryon", "about", "howitwork", "collection"];
 
         const observers = sections.map((id) => {
             const element = document.getElementById(id);
@@ -40,7 +40,8 @@ export default function Header() {
 
     const links = [
         { id: "home", label: "Home" },
-        { id: "about", label: "About" },
+        { id: "tryon", label: "Try On" },
+        { id: "about", label: "About Us" },
         { id: "howitwork", label: "How It Work" },
         { id: "collection", label: "Collection" },
     ]
@@ -77,7 +78,7 @@ export default function Header() {
                         >
                             {link.label}
                             {activeSection === link.id && (
-                                <span className="absolute left-0 bottom-0 w-full h-[2px] bg-gradient-to-r from-purple-500 to-pink-500 rounded transition-all duration-300"></span>
+                                <span className="absolute left-0 -bottom-0.5 w-full h-[2px] bg-gradient-to-r from-purple-500 to-pink-500 rounded transition-all duration-300"></span>
                             )}
                         </a>
                     ))}
