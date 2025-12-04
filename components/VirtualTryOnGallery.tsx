@@ -1,0 +1,57 @@
+"use client";
+
+import Image from "next/image";
+import { Button } from "@/ui/button";
+
+export default function VirtualTryOnGallery() {
+  return (
+    <section className="w-full flex flex-col items-center">
+
+      {/* ---------- GALLERY SECTION ---------- */}
+      <div className="w-full max-w-5xl mx-auto text-center py-14 px-6">
+        <h2 className="text-3xl font-bold mb-3">Virtual Try-On Gallery</h2>
+        <p className="text-gray-500 text-sm mb-10">
+          See real examples of our AI-powered virtual try-on technology in action
+        </p>
+
+        {/* Images */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-5">
+          {["img5.png", "img2.png", "img3.png", "img4.png"].map((src, i) => (
+            <div key={i} className="w-full rounded-xl overflow-hidden shadow">
+              <Image
+                src={`/images/${src}`}
+                alt={`Gallery Image ${i + 1}`}
+                width={300}
+                height={350}
+                className="object-cover w-full h-64"
+              />
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* ---------- CTA SECTION (Gradient) ---------- */}
+      <div className="w-full bg-gradient-to-r from-[#C8B8FF] via-[#D8C4F3] to-[#E9D2E7] md:py-15 py-8 text-center px-6">
+        <h2 className="md:text-5xl text-3xl font-bold md:mb-5 ">Ready to Transform Your Shopping?</h2>
+
+        <p className="text-gray-700 md:text-sm text-xs  mb-8 md:mt-0 mt-5 max-w-lg  mx-auto">
+          Join over 500,000 people who shop smarter with AI-powered virtual try-ons
+        </p>
+
+        {/* Button */}
+        <Button
+          className="rounded-full px-6 py-5 text-sm font-medium bg-black text-white hover:opacity-90 hover:scale-105 duration-300"
+        >
+          <a href="#tryon">
+            Try Now →
+          </a>
+        </Button>
+
+        {/* Footnote */}
+        <p className="text-xs text-gray-600 mt-5">
+          No credit card required • 14-day free trial • Cancel anytime
+        </p>
+      </div>
+    </section>
+  );
+}
