@@ -5,8 +5,11 @@ import { Button } from "@/ui/button"
 import { Card, CardContent } from "@/ui/card"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
 import { faCamera, faPlay } from "@fortawesome/free-solid-svg-icons"
+import { useState } from "react"
 
 export default function HeroSection() {
+    useState(false);
+    const [showVideo, setShowVideo] = useState(false);
     return (
         <>
             <section className="w-full flex flex-col md:flex-row items-center justify-between px-4 md:px-12 py-14 bg-gradient-to-r from-[#C8B8FF] to-[#E9D2E7]/20">
@@ -47,6 +50,7 @@ export default function HeroSection() {
 
                         <Button
                             variant="outline"
+                            onClick={() => setShowVideo(true)}
                             className="rounded-full bg-white text-black/70 md:w-35 w-70 py-6 md:mt-0 mt-2  text-sm flex items-center gap-2 shadow-sm border-none hover:scale-105  duration-300"
                         >
                             <FontAwesomeIcon icon={faPlay} className="w-3 h-3" />
@@ -91,6 +95,16 @@ export default function HeroSection() {
                     Enjoy a seamless, ultra-realistic try-on experience designed to help you discover your perfect look.
                 </p>
             </section>
+
+            {showVideo && (
+                <div className="m-auto flex justify-center items-center ">
+                    <div className=" fixed absolute top-0 w-[100%] h-[100%] z-[9999] bg-black/60 backdrop-blur-sm 
+                    flex flex-col items-center justify-center  " >
+                        <Button variant="outline" onClick={() => setShowVideo(false)} className="text-white bg-black/60 rounded-4xl absolute md:top-15 md:right-37 top-0 right-0 border-none">X</Button>
+                        <video autoPlay controls src="/videos/demo.mp4" className="w-250" />
+                    </div>
+                </div>
+            )}
         </>
     )
 }
