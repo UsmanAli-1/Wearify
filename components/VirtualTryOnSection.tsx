@@ -4,6 +4,7 @@ import Image from "next/image";
 import { useState } from "react";
 import { Button } from "@/ui/button";
 import { Card, CardContent } from "@/ui/card";
+import { Input } from "@/ui/input";
 
 export default function UploadTryOnSection() {
     const [uploadedImage, setUploadedImage] = useState<string | null>(null);
@@ -19,7 +20,7 @@ export default function UploadTryOnSection() {
         <section className="w-full px-6 md:px-20 py-8 flex flex-col gap-5 bg-gradient-to-r from-[#C8B8FF] to-[#E9D2E7]">
             <h1 className=" m-auto md:text-5xl text-3xl font-bold text-[#3A2154]">Virtual Try On</h1>
             <p className=" text-gray-500 text-md md:max-w-2xl md:mx-auto px-3 ">Upload image and select garment and just click Generate button to see the magic. </p>
-           
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
 
                 {/* LEFT COLUMN */}
@@ -75,7 +76,11 @@ export default function UploadTryOnSection() {
                         </p>
 
                         <label className="cursor-pointer text-[#A06CE3] font-semibold text-sm ">
-                            <input type="file" className="hidden" accept="image/*" onChange={handleUpload} />
+                            <Input
+                                type="file"
+                                className="hidden"
+                                onChange={handleUpload}
+                            />
                             Select Image
                         </label>
                     </Card>

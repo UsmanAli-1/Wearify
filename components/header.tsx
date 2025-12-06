@@ -90,8 +90,10 @@ export default function Header() {
 
                 {/* Desktop Button */}
                 <div className="hidden md:block">
-                    <Button className="rounded-full bg-[#F7DDE2] hover:bg-purple-500/30 text-black hover:scale-105 duration-300">
-                        Sign In/Sign Up
+                    <Button className="rounded-full  bg-gradient-to-r from-purple-500/40 to-pink-500/40  hover:bg-purple-500/20 text-black hover:scale-105 duration-300">
+                        <a href="/signin">
+                            Sign In/Sign Up
+                        </a>
                     </Button>
                 </div>
 
@@ -128,8 +130,10 @@ export default function Header() {
                     ))}
                 </div>
                 <div className="flex flex-col gap-4 px-6 pr-9  font-medium">
-                    <Button className="rounded-full bg-[#F7DDE2] hover:bg-purple-500/30 text-black hover:scale-105 duration-300 mt-2">
-                        Sign In/Sign Up
+                    <Button className="rounded-full bg-gradient-to-r from-purple-500/40 to-pink-500/40 hover:bg-purple-500/30 text-black hover:scale-105 duration-300 mt-2">
+                        <a href="/signin">
+                            Sign In/Sign Up
+                        </a>
                     </Button>
                 </div>
             </div>
