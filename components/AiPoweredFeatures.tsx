@@ -15,7 +15,7 @@ export default function AiPoweredFeatures() {
     const features = [
         {
             icon: faCube,
-            title: "Real-Time Virtual Fitting",
+            title: "2D Virtual Fitting",
             desc: "Upload your photos and see clothes on your body instantly. Our AI adapts to your body shape and posture for realistic results.",
         },
         {
@@ -26,12 +26,12 @@ export default function AiPoweredFeatures() {
         {
             icon: faWandMagicSparkles,
             title: "Style Recommendations",
-            desc: "Get personalized outfit suggestions based on your preferences, body type, and current fashion trends.",
+            desc: "Get personalized outfit suggestions based on your preferences, body type, and skin tone.",
         },
         {
             icon: faLayerGroup,
             title: "Mix & Match Outfits",
-            desc: "Combine different pieces virtually to create complete looks. See how shoes, tops, bottoms, and accessories work together.",
+            desc: "Combine different pieces virtually to create complete looks. See how  tops, bottoms work together.",
         },
         {
             icon: faVrCardboard,
