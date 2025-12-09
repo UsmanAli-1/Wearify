@@ -19,11 +19,6 @@ export default function AiPoweredFeatures() {
             desc: "Upload your photos and see clothes on your body instantly. Our AI adapts to your body shape and posture for realistic results.",
         },
         {
-            icon: faRulerCombined,
-            title: "Smart Body Measurements",
-            desc: "AI analyzes your body measurements automatically to recommend the perfect size for every brand.",
-        },
-        {
             icon: faWandMagicSparkles,
             title: "Style Recommendations",
             desc: "Get personalized outfit suggestions based on your preferences, body type, and skin tone.",
@@ -32,11 +27,6 @@ export default function AiPoweredFeatures() {
             icon: faLayerGroup,
             title: "Mix & Match Outfits",
             desc: "Combine different pieces virtually to create complete looks. See how  tops, bottoms work together.",
-        },
-        {
-            icon: faVrCardboard,
-            title: "AR Try-On Experience",
-            desc: "Use your phone camera for augmented reality try-ons. See clothes on yourself in real time as you move.",
         },
         {
             icon: faShareNodes,
@@ -54,7 +44,7 @@ export default function AiPoweredFeatures() {
                 Experience cutting-edge technology that revolutionizes how you shop for clothes online
             </p>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-8">
                 {features.map((feat, i) => (
                     <Card
                         key={i}
