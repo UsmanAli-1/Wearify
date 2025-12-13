@@ -8,10 +8,9 @@ import { faCamera, faPlay } from "@fortawesome/free-solid-svg-icons"
 import { useState } from "react"
 
 export default function HeroSection() {
-    useState(false);
     const [showVideo, setShowVideo] = useState(false);
     return (
-        <>
+        <>  
             <section className="w-full flex flex-col md:flex-row items-center justify-between px-4 md:px-12 py-14 bg-gradient-to-r from-[#C8B8FF] to-[#E9D2E7]/20">
 
                 {/* Left */}
@@ -81,7 +80,7 @@ export default function HeroSection() {
                             width={700}
                             height={700}
                             className="rounded-2xl object-cover"
-                        />
+                        />  
                     </CardContent>
                 </Card>
             </section>

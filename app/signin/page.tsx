@@ -13,7 +13,7 @@ export default function SignIn() {
                 {/* LEFT SIDE */}
                 <div className="-top-20 flex flex-col items-center justify-center text-center w-full md:w-1/2">
 
-                    {/* Gradient Text */}
+                    
                     <h1 className="hidden md:block text-5xl font-bold bg-gradient-to-r from-pink-500 to-purple-600 bg-clip-text text-transparent pb-4">
                         Wearify
                     </h1>
