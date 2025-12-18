@@ -5,6 +5,7 @@ import { Card, CardContent } from "@/ui/card";
 import { Input } from "@/ui/input";
 import { Button } from "@/ui/button";
 import { useState } from "react";
+// import bcrypt from 'bcrypt';
 
 export default function SignUp() {
 
@@ -45,7 +46,7 @@ export default function SignUp() {
                 email: "",
                 phone: "",
                 password: "",
-                points: "",
+                points: "120",
             });
             alert("user created");
         }
