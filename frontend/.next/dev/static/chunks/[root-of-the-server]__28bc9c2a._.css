@@ -164,6 +164,7 @@
 @layer theme {
   :root, :host {
     --color-blue-600: #155dfc;
+    --color-purple-400: #c07eff;
     --color-purple-500: #ac4bff;
     --color-purple-600: #9810fa;
     --color-pink-200: #fccee8;
@@ -225,6 +226,7 @@
   @supports (color: lab(0% 0 0)) {
     :root, :host {
       --color-blue-600: lab(44.0605% 29.0279 -86.0352);
+      --color-purple-400: lab(63.6946% 47.6127 -59.2066);
       --color-purple-500: lab(52.0183% 66.11 -78.2316);
       --color-purple-600: lab(43.0295% 75.21 -86.5669);
       --color-pink-200: lab(87.4504% 19.6 -6.46662);
@@ -1652,6 +1654,10 @@
     color: var(--primary-foreground);
   }
 
+  .text-purple-400 {
+    color: var(--color-purple-400);
+  }
+
   .text-purple-600 {
     color: var(--color-purple-600);
   }
@@ -1666,6 +1672,10 @@
 
   .text-white {
     color: var(--color-white);
+  }
+
+  .underline {
+    text-decoration-line: underline;
   }
 
   .underline-offset-4 {

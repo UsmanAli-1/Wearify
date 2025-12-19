@@ -4,16 +4,57 @@ import Image from "next/image";
 import { Card, CardContent } from "@/ui/card";
 import { Input } from "@/ui/input";
 import { Button } from "@/ui/button";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+
 
 export default function SignIn() {
+    const router = useRouter();
+
+    const [formloginData, setFormloginData] = useState(
+        {
+            email: "",
+            password: "",
+        });
+
+    const handleChanges = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setFormloginData({
+            ...formloginData,
+            [e.target.name]: e.target.value
+        });
+    }
+
+    const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
+        e.preventDefault();
+
+        const response = await fetch("http://localhost:4000/api/users/login", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify(formloginData),
+        })
+
+        const data = await response.json();
+
+        if (response.ok) {
+            localStorage.setItem("user", JSON.stringify(data.user));
+            router.push("/");
+        }
+        else{
+            console.log(data.message);
+        }
+
+    }
     return (
+
         <div className="h-140 w-full flex items-center justify-center ">
             <div className="max-w-5xl w-full flex flex-col md:flex-row items-center justify-between px-6 md:px-12 md:gap-45">
 
                 {/* LEFT SIDE */}
                 <div className="-top-20 flex flex-col items-center justify-center text-center w-full md:w-1/2">
 
-                    
+
                     <h1 className="hidden md:block text-5xl font-bold bg-gradient-to-r from-pink-500 to-purple-600 bg-clip-text text-transparent pb-4">
                         Wearify
                     </h1>
@@ -48,34 +89,46 @@ export default function SignIn() {
                             Sign In
                         </h2>
 
-                        {/* Email */}
-                        <Input
-                            type="email"
-                            placeholder="Email"
-                            className="mb-4 bg-white"
-                        />
+                        <form onSubmit={handleLogin}>
 
-                        {/* Password */}
-                        <Input
-                            type="password"
-                            placeholder="Password"
-                            className="mb-2 bg-white"
-                        />
+                            {/* Email */}
+                            <Input
+                                type="email"
+                                name="email"
+                                placeholder="Email"
+                                className="mb-4 bg-white"
+                                onChange={handleChanges}
+                                value={formloginData.email}
+                                required
+                            />
 
-                        {/* Forgot Password */}
-                        <p className="text-center text-sm text-gray-700 mb-4 hover:underline cursor-pointer">
-                            Forget Password?
-                        </p>
+                            {/* Password */}
+                            <Input
+                                type="password"
+                                name="password"
+                                placeholder="Password"
+                                className="mb-2 bg-white"
+                                onChange={handleChanges}
+                                value={formloginData.password}
+                                required
+                            />
 
-                        {/* Login Button */}
-                        <Button
-                            className="w-full py-2 mb-4 rounded-lg text-white font-semibold"
-                            style={{
-                                background: "linear-gradient(90deg, #5AA5E8, #9B35E4)",
-                            }}
-                        >
-                            Sign In
-                        </Button>
+                            {/* Forgot Password */}
+                            <p className="text-center text-sm text-gray-700 mb-4 hover:underline cursor-pointer">
+                                Forget Password?
+                            </p>
+
+                            {/* Login Button */}
+                            <Button
+                                className="w-full py-2 mb-4 rounded-lg text-white font-semibold"
+                                style={{
+                                    background: "linear-gradient(90deg, #5AA5E8, #9B35E4)",
+                                }}
+                                type="submit"
+                            >
+                                Sign In
+                            </Button>
+                        </form>
 
                         {/* OR */}
                         <div className="flex items-center my-4">
