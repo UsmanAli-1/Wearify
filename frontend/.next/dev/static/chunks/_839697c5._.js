@@ -272,25 +272,27 @@ function Header() {
                             }, this),
                             user ? /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$ui$2f$button$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Button"], {
                                 onClick: handleSignOut,
-                                className: "hidden md:block rounded-full bg-gradient-to-r from-purple-500/40 to-pink-500/40 text-black hover:scale-105 duration-300",
+                                variant: "secondary",
+                                className: "hidden md:block rounded-full bg-gradient-to-r from-purple-500/40 to-pink-500/40 text-black hover:scale-105 duration-300 ",
                                 children: "Sign Out"
                             }, void 0, false, {
                                 fileName: "[project]/components/header.tsx",
                                 lineNumber: 126,
                                 columnNumber: 25
                             }, this) : /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$ui$2f$button$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Button"], {
+                                variant: "secondary",
                                 className: "hidden md:block rounded-full bg-gradient-to-r from-purple-500/40 to-pink-500/40 text-black hover:scale-105 duration-300",
                                 children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("a", {
                                     href: "/signin",
                                     children: "Sign In / Sign Up"
                                 }, void 0, false, {
                                     fileName: "[project]/components/header.tsx",
-                                    lineNumber: 134,
+                                    lineNumber: 137,
                                     columnNumber: 29
                                 }, this)
                             }, void 0, false, {
                                 fileName: "[project]/components/header.tsx",
-                                lineNumber: 133,
+                                lineNumber: 134,
                                 columnNumber: 25
                             }, this)
                         ]
@@ -310,17 +312,17 @@ function Header() {
                                 size: "lg"
                             }, void 0, false, {
                                 fileName: "[project]/components/header.tsx",
-                                lineNumber: 149,
+                                lineNumber: 152,
                                 columnNumber: 25
                             }, this)
                         }, void 0, false, {
                             fileName: "[project]/components/header.tsx",
-                            lineNumber: 144,
+                            lineNumber: 147,
                             columnNumber: 21
                         }, this)
                     }, void 0, false, {
                         fileName: "[project]/components/header.tsx",
-                        lineNumber: 143,
+                        lineNumber: 146,
                         columnNumber: 17
                     }, this)
                 ]
@@ -344,18 +346,18 @@ function Header() {
                                         className: "bg-gradient-to-r from-purple-500 to-pink-500 rounded"
                                     }, void 0, false, {
                                         fileName: "[project]/components/header.tsx",
-                                        lineNumber: 169,
+                                        lineNumber: 172,
                                         columnNumber: 33
                                     }, this)
                                 ]
                             }, link.id, true, {
                                 fileName: "[project]/components/header.tsx",
-                                lineNumber: 161,
+                                lineNumber: 164,
                                 columnNumber: 25
                             }, this))
                     }, void 0, false, {
                         fileName: "[project]/components/header.tsx",
-                        lineNumber: 159,
+                        lineNumber: 162,
                         columnNumber: 17
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -366,7 +368,7 @@ function Header() {
                             children: "Sign Out"
                         }, void 0, false, {
                             fileName: "[project]/components/header.tsx",
-                            lineNumber: 176,
+                            lineNumber: 179,
                             columnNumber: 25
                         }, this) : /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$ui$2f$button$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Button"], {
                             className: "rounded-full bg-gradient-to-r from-purple-500/40 to-pink-500/40 hover:bg-purple-500/30 text-black hover:scale-105 duration-300 mt-2",
@@ -375,23 +377,23 @@ function Header() {
                                 children: "Sign In/Sign Up"
                             }, void 0, false, {
                                 fileName: "[project]/components/header.tsx",
-                                lineNumber: 183,
+                                lineNumber: 186,
                                 columnNumber: 29
                             }, this)
                         }, void 0, false, {
                             fileName: "[project]/components/header.tsx",
-                            lineNumber: 182,
+                            lineNumber: 185,
                             columnNumber: 25
                         }, this)
                     }, void 0, false, {
                         fileName: "[project]/components/header.tsx",
-                        lineNumber: 174,
+                        lineNumber: 177,
                         columnNumber: 17
                     }, this)
                 ]
             }, void 0, true, {
                 fileName: "[project]/components/header.tsx",
-                lineNumber: 155,
+                lineNumber: 158,
                 columnNumber: 13
             }, this)
         ]

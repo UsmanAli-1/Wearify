@@ -125,12 +125,15 @@ export default function Header() {
                     {user ? (
                         <Button
                             onClick={handleSignOut}
-                            className="hidden md:block rounded-full bg-gradient-to-r from-purple-500/40 to-pink-500/40 text-black hover:scale-105 duration-300"
+                            variant="secondary"
+                            className="hidden md:block rounded-full bg-gradient-to-r from-purple-500/40 to-pink-500/40 text-black hover:scale-105 duration-300 "
                         >
                             Sign Out
                         </Button>
                     ) : (
-                        <Button className="hidden md:block rounded-full bg-gradient-to-r from-purple-500/40 to-pink-500/40 text-black hover:scale-105 duration-300">
+                        <Button
+                            variant="secondary"
+                            className="hidden md:block rounded-full bg-gradient-to-r from-purple-500/40 to-pink-500/40 text-black hover:scale-105 duration-300">
                             <a href="/signin">Sign In / Sign Up</a>
                         </Button>
                     )}
