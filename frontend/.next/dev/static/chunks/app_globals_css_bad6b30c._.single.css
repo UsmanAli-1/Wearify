@@ -1767,18 +1767,6 @@
   }
 
   @media (hover: hover) {
-    .hover\:bg-purple-500\/20:hover {
-      background-color: #ac4bff33;
-    }
-
-    @supports (color: color-mix(in lab, red, red)) {
-      .hover\:bg-purple-500\/20:hover {
-        background-color: color-mix(in oklab, var(--color-purple-500) 20%, transparent);
-      }
-    }
-  }
-
-  @media (hover: hover) {
     .hover\:bg-purple-500\/30:hover {
       background-color: #ac4bff4d;
     }

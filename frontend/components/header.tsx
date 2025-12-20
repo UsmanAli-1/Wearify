@@ -15,6 +15,7 @@ export default function Header() {
         points: number;
     };
 
+
     const [user, setUser] = useState<User | null>(null)
     const [isOpen, setIsOpen] = useState(false);
     const [activeSection, setActiveSection] = useState("");
