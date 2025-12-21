@@ -39,6 +39,7 @@ export default function SignIn() {
         const data = await response.json();
 
         if (response.ok) {
+             window.dispatchEvent(new Event("auth-changed"));
             router.push("/");
         }
         else {

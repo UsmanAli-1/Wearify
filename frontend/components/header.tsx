@@ -45,15 +45,24 @@ export default function Header() {
 
                 const userData = await res.json();
                 setUser(userData);
-            } catch (error) {
+            } catch {
                 setUser(null);
             }
         };
 
+        // run once on load
         fetchUser();
-    });
+
+        // run after login/logout
+        window.addEventListener("auth-changed", fetchUser);
+
+        return () => {
+            window.removeEventListener("auth-changed", fetchUser);
+        };
+    }, []);
 
 
+    // signout function 
     const handleSignOut = async () => {
         await fetch("http://localhost:4000/api/users/logout", {
             method: "POST",
@@ -61,6 +70,7 @@ export default function Header() {
         });
 
         setUser(null);
+        // window.dispatchEvent(new Event("auth-changed"));
         router.push("/");
     };
 
@@ -83,7 +93,6 @@ export default function Header() {
                 },
                 { threshold: 0.5 }
             );
-``
             observer.observe(element);
             observers.push(observer);
         });
