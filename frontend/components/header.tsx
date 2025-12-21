@@ -6,8 +6,12 @@ import { usePathname } from "next/navigation";
 import { Button } from "@/ui/button";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faBars, faXmark, faGem } from "@fortawesome/free-solid-svg-icons";
+import { useRouter } from "next/navigation";
+
 
 export default function Header() {
+
+    const router = useRouter();
     type User = {
         id: string;
         name: string;
@@ -21,23 +25,45 @@ export default function Header() {
     const [activeSection, setActiveSection] = useState("");
     const pathname = usePathname();
 
+
     const toggleMenu = () => setIsOpen(!isOpen);
 
 
-    // get user points
+    // get user data
 
     useEffect(() => {
-        const storedUser = localStorage.getItem("user");
-        if (storedUser) {
-            setUser(JSON.parse(storedUser));
-        }
-    }, []);
+        const fetchUser = async () => {
+            try {
+                const res = await fetch("http://localhost:4000/api/users/me", {
+                    credentials: "include",
+                });
 
-    const handleSignOut = () => {
-        localStorage.removeItem("user");
+                if (!res.ok) {
+                    setUser(null);
+                    return;
+                }
+
+                const userData = await res.json();
+                setUser(userData);
+            } catch (error) {
+                setUser(null);
+            }
+        };
+
+        fetchUser();
+    });
+
+
+    const handleSignOut = async () => {
+        await fetch("http://localhost:4000/api/users/logout", {
+            method: "POST",
+            credentials: "include",
+        });
+
         setUser(null);
-        window.location.href = "/"; // or router.push
+        router.push("/");
     };
+
 
 
     // Only detect sections on homepage
@@ -57,7 +83,7 @@ export default function Header() {
                 },
                 { threshold: 0.5 }
             );
-
+``
             observer.observe(element);
             observers.push(observer);
         });
