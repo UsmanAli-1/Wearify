@@ -62,6 +62,7 @@ export default function Header() {
     }, []);
 
 
+
     // signout function 
     const handleSignOut = async () => {
         await fetch("http://localhost:4000/api/users/logout", {
@@ -71,7 +72,7 @@ export default function Header() {
 
         setUser(null);
         // window.dispatchEvent(new Event("auth-changed"));
-        router.push("/");
+        window.location.reload();
     };
 
 
