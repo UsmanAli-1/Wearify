@@ -5,6 +5,8 @@ import { useEffect, useState } from "react";
 import { Button } from "@/ui/button";
 import { Card, CardContent } from "@/ui/card";
 import { Input } from "@/ui/input";
+import toast from "react-hot-toast";
+
 
 export default function UploadTryOnSection() {
     const [uploadedImage, setUploadedImage] = useState<string | null>(null);
@@ -26,6 +28,30 @@ export default function UploadTryOnSection() {
         const file = e.target.files[0];
         setUploadedImage(URL.createObjectURL(file));
     };
+
+    // check image upload 
+    const handleImageCheck = async () => {
+        if (!uploadedImage) {
+            toast.error("please Upload image first")
+            return
+        }
+
+        const res = await fetch("http://localhost:4000/api/users/use-points", {
+            method: "POST",
+            credentials: "include",
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+            toast.error(data.message);
+            return;
+        }
+
+        window.dispatchEvent(new Event("auth-changed"));
+
+        toast.success("Points deducted & generation started");
+    }
 
     return (
         <section className="w-full px-6 md:px-20 py-8 flex flex-col gap-5 bg-gradient-to-r from-[#C8B8FF] to-[#E9D2E7]">
@@ -73,7 +99,7 @@ export default function UploadTryOnSection() {
                         >
                             <Input
                                 type="file"
-                                className="hidden"   
+                                className="hidden"
                                 disabled={!isLoggedIn}
                                 onChange={handleUpload}
                             />
@@ -116,6 +142,7 @@ export default function UploadTryOnSection() {
                         ? "bg-gradient-to-r from-[#9734E6] to-[#E8479C] cursor-pointer"
                         : "bg-gradient-to-r from-[#9734E6] to-[#E8479C] cursor-not-allowed"
                         }`}
+                    onClick={handleImageCheck}
                 >
                     Generate
                 </Button>

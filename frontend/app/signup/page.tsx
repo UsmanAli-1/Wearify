@@ -6,6 +6,8 @@ import { Input } from "@/ui/input";
 import { Button } from "@/ui/button";
 import { useState } from "react";
 // import bcrypt from 'bcrypt';
+import toast from "react-hot-toast";
+
 
 export default function SignUp() {
 
@@ -48,7 +50,7 @@ export default function SignUp() {
                 password: "",
                 points: "120",
             });
-            alert("user created");
+            toast.success("user created");
         }
     }
     return (

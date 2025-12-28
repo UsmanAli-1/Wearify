@@ -76,13 +76,30 @@ router.post("/login", async (req, res) => {
 
 
 router.get("/me", auth, async (req, res) => {
-    try {
-      const user = await User.findById(req.user.id).select("-password");
-      res.json(user);
+  try {
+    const user = await User.findById(req.user.id).select("-password");
+    res.json(user);
 
-    } catch (error) {
-      return res.status(500).json({message:"server error"});
-    }
+  } catch (error) {
+    return res.status(500).json({ message: "server error" });
+  }
+
+});
+
+
+router.post("/use-points", auth, async (req, res) => {
+  const COST = 40; 
+
+  const user = await User.findById(req.user.id);
+
+  if (user.points < COST) {
+    return res.status(400).json({ message: "Not enough points" });
+  }
+
+  user.points -= COST;   // 120 → 80
+  await user.save();     //  SAVED TO DATABASE
+
+  res.json({ points: user.points });
 });
 
 
