@@ -116,11 +116,13 @@ export default function Header() {
             : "text-black"
         }`;
     return (
-        <header className="sticky top-0 z-50 w-full shadow-sm bg-white">
-            <nav className="flex items-center justify-between px-8">
-                {/* Logo */}
-                <div>
-                    <a href="/">
+        <header className="fixed top-5 left-0 right-0 z-50 flex justify-center pointer-events-none">
+            {/* Header Card */}
+            <div className="pointer-events-auto w-[92%] md:w-[80%] max-w-7xl bg-white/95 backdrop-blur-md rounded-2xl shadow-lg">
+                <nav className="flex items-center justify-between px-6 md:px-8">
+
+                    {/* Logo */}
+                    <a href="/" className="flex items-center hover:scale-105  transition">
                         <Image
                             src="/images/logo1.png"
                             alt="Logo"
@@ -129,102 +131,101 @@ export default function Header() {
                             className="object-cover py-2"
                         />
                     </a>
-                </div>
 
-                {/* Desktop Links */}
-                <div className="hidden md:flex gap-6 font-medium">
-                    {links.map((link) => (
-                        <a
-                            key={link.id}
-                            href={`/#${link.id}`} // ensures scroll to homepage sections
-                            onClick={() => setActiveSection(link.id)} // works on homepage
-                            className={linkClass(link.id)}
-                        >
-                            {link.label}
-                            {pathname === "/" && activeSection === link.id && (
-                                <span className="absolute left-0 -bottom-0.5 w-full h-[2px] bg-gradient-to-r from-purple-500 to-pink-500 rounded transition-all duration-300"></span>
-                            )}
-                        </a>
-                    ))}
-                </div>
+                    {/* Desktop Links */}
+                    <div className="hidden md:flex gap-6 font-medium relative">
+                        {links.map((link) => (
+                            <a
+                                key={link.id}
+                                href={`/#${link.id}`}
+                                onClick={() => setActiveSection(link.id)}
+                                className={linkClass(link.id)}
+                            >
+                                {link.label}
+                                {pathname === "/" && activeSection === link.id && (
+                                    <span className="absolute left-0 -bottom-1 w-full h-[2px] bg-gradient-to-r from-purple-500 to-pink-500 rounded" />
+                                )}
+                            </a>
+                        ))}
+                    </div>
 
-                {/* Desktop Button */}
-                <div className=" md:flex items-center gap-4">
-                    {/* Points Box */}
-                    {user?.points != null && (
-                        <div className="flex items-center gap-2 bg-black text-white px-3 py-1 rounded-lg">
-                            <FontAwesomeIcon icon={faGem} className="text-purple-400 text-sm" />
-                            <span className="text-sm font-medium">{user.points}</span>
+                    {/* Right Section */}
+                    <div className="flex items-center gap-4">
+
+                        {/* Points */}
+                        {user?.points != null && (
+                            <div className="hidden md:flex items-center gap-2 bg-black text-white px-3 py-1 rounded-lg">
+                                <FontAwesomeIcon icon={faGem} className="text-purple-400 text-sm" />
+                                <span className="text-sm font-medium">{user.points}</span>
+                            </div>
+                        )}
+
+                        {/* Auth Button */}
+                        {user ? (
+                            <Button
+                                onClick={handleSignOut}
+                                className="hidden md:block rounded-full bg-gradient-to-r from-purple-500/40 to-pink-500/40 text-black hover:scale-105 duration-300"
+                            >
+                                Sign Out
+                            </Button>
+                        ) : (
+                            
+                            <Button
+                            variant="secondary"
+                            className="hidden shadow-md md:block rounded-full bg-gradient-to-r from-purple-500/40 to-pink-500/40 text-black hover:scale-105 duration-300 ">
+                                <a href="/signin">Sign In / Sign Up</a>
+                            </Button>
+                        )}
+
+                        {/* Mobile Menu Button */}
+                        <div className="md:hidden">
+                            <Button
+                                variant="outline"
+                                onClick={toggleMenu}
+                                className="p-2 rounded-md"
+                            >
+                                <FontAwesomeIcon icon={isOpen ? faXmark : faBars} size="lg" />
+                            </Button>
                         </div>
-                    )}
-
-                    {/* Sign In signout Button */}
-                    {user ? (
-                        <Button
-                            onClick={handleSignOut}
-                            variant="secondary"
-                            className="hidden md:block rounded-full bg-gradient-to-r from-purple-500/40 to-pink-500/40 text-black hover:scale-105 duration-300 "
-                        >
-                            Sign Out
-                        </Button>
-                    ) : (
-                        <Button
-                            variant="secondary"
-                            className="hidden md:block rounded-full bg-gradient-to-r from-purple-500/40 to-pink-500/40 text-black hover:scale-105 duration-300">
-                            <a href="/signin">Sign In / Sign Up</a>
-                        </Button>
-                    )}
-
-
-                </div>
-
-
-                {/* Mobile Hamburger */}
-                <div className="md:hidden">
-                    <Button
-                        variant="outline"
-                        onClick={toggleMenu}
-                        className="p-2 rounded-md hover:bg-gray-100 transition"
-                    >
-                        <FontAwesomeIcon icon={isOpen ? faXmark : faBars} size="lg" />
-                    </Button>
-                </div>
-            </nav>
+                    </div>
+                </nav>
+            </div>
 
             {/* Mobile Menu */}
             <div
-                className={`md:hidden bg-white shadow-md transition-all duration-300 overflow-hidden ${isOpen ? "max-h-screen py-4 " : "max-h-0"
+                className={`md:hidden fixed top-[90px] left-1/2 -translate-x-1/2 w-[92%] bg-white rounded-2xl shadow-lg overflow-hidden transition-all duration-300 ${isOpen ? "max-h-screen py-4" : "max-h-0"
                     }`}
             >
                 <div className="flex flex-col gap-4 px-6 font-medium">
                     {links.map((link) => (
                         <a
                             key={link.id}
-                            href={`/#${link.id}`} // scroll to homepage section
-                            onClick={() => setActiveSection(link.id)}
+                            href={`/#${link.id}`}
+                            onClick={() => {
+                                setActiveSection(link.id);
+                                toggleMenu();
+                            }}
                             className={linkClass(link.id)}
                         >
                             {link.label}
-                            {pathname === "/" && activeSection === link.id && (
-                                <span className="bg-gradient-to-r from-purple-500 to-pink-500 rounded"></span>
-                            )}
                         </a>
                     ))}
-                </div>
-                <div className="flex flex-col gap-4 px-6 pr-9 font-medium">
+
                     {user ? (
-                        <Button className="rounded-full bg-gradient-to-r from-purple-500/40 to-pink-500/40 hover:bg-purple-500/30 text-black hover:scale-105 duration-300 mt-2"
+                        <Button
                             onClick={handleSignOut}
+                            className="rounded-full bg-gradient-to-r from-purple-500/40 to-pink-500/40 text-black mt-2"
                         >
                             Sign Out
                         </Button>
                     ) : (
-                        <Button className="rounded-full bg-gradient-to-r from-purple-500/40 to-pink-500/40 hover:bg-purple-500/30 text-black hover:scale-105 duration-300 mt-2">
-                            <a href="/signin">Sign In/Sign Up</a>
+                        <Button className="rounded-full bg-gradient-to-r from-purple-500/40 to-pink-500/40 text-black mt-2">
+                            <a href="/signin">Sign In / Sign Up</a>
                         </Button>
                     )}
                 </div>
             </div>
         </header>
+
     );
 }
