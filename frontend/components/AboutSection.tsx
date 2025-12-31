@@ -7,10 +7,10 @@ export default function AboutSection() {
     return (
         <section
             id="about"
-            className="w-full py-12 px-6 md:px-20 "
+            className="w-full py-12 px-6 md:px-20 bg-[#F5F5DC]"
         >
             <div className="max-w-5xl mx-auto text-center mb-12">
-                <h2 className="text-3xl md:text-5xl font-bold text-gray-800">
+                <h2 className="text-3xl md:text-5xl font-bold text-[#1C1C1C]/90">
                     About Us
                 </h2>
                 <p className="text-gray-600 mt-3 max-w-3xl mx-auto leading-relaxed">
@@ -31,58 +31,59 @@ export default function AboutSection() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8 ">
 
                 {/* Project Title Card */}
-                <Card className="shadow-md border-pink-200/60 bg-white hover:scale-105 duration-300"
+                <Card className="shadow-lg border-none bg-white hover:scale-105 duration-300"
                     style={{
-                        background: "linear-gradient(135deg, #FDF3F8 0%, #FFFFFF 100%)",
+                        background: "linear-gradient(135deg, #6B7A4C 0%, #F5F5DC 100%)",
                     }}
                 >
                     <CardHeader>
-                        <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-gradient-to-r from-[#A86CE3] to-[#EF5BA1] text-white shadow-md">
+                        <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-gradient-to-r  from-[#4F5D3A] to-[#6B7A4C] text-white shadow-md">
                             <Sparkles className="w-6 h-6" />
                         </div>
-                        <CardTitle className="mt-4 text-xl font-bold text-gray-800">
+                        <CardTitle className="mt-4 text-xl font-bold text-[#1C1C1C]/90">
                             Project Title
                         </CardTitle>
                     </CardHeader>
-                    <CardContent className="text-gray-600 text-sm">
+                    <CardContent className="text-gray-700 text-sm">
                         Wearify - AI-Powered Virtual Try-On System 
                     </CardContent>
                 </Card>
 
                 {/* Group Members Card */}
-                <Card className="shadow-md border-pink-200/60 bg-white hover:scale-105 duration-300"
+                <Card className="shadow-lg border-none bg-[#F5F5DC] backdrop-blur-md hover:scale-105 duration-300"
                     style={{
-                        background: "linear-gradient(135deg, #FDF3F8 0%, #FFFFFF 100%)",
+                        background: "linear-gradient(135deg, #6B7A4C 0%, #F5F5DC 100%)",
                     }}
+                    
                 >
                     <CardHeader>
-                        <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-gradient-to-r from-[#A86CE3] to-[#EF5BA1] text-white shadow-md">
+                        <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-gradient-to-r  from-[#4F5D3A] to-[#6B7A4C] text-white shadow-md">
                             <Users className="w-6 h-6" />
                         </div>
-                        <CardTitle className="mt-4 text-xl font-bold text-gray-800">
+                        <CardTitle className="mt-4 text-xl font-bold text-[#1C1C1C]/90">
                             Our Team
                         </CardTitle>
                     </CardHeader>
-                    <CardContent className="text-gray-600 text-sm space-y-2">
-                        <p><span className="font-semibold text-gray-700">Member 1:</span> Usman Ali – [23237]</p>
-                        <p><span className="font-semibold text-gray-700">Member 2:</span> Adil Usman – [23151]</p>
-                        <p><span className="font-semibold text-gray-700">Member 3:</span> Syed Rohan Shah  – [23166]</p>
-                        <p><span className="font-semibold text-gray-700">Member 4:</span> Hadia Rafiq– [25195]</p>
-                        <p className="pt-1 text-gray-500 text-xs">(B.S. Computer Science — Iqra University)</p>
+                    <CardContent className="text-gray-700 text-sm space-y-2">
+                        <p><span className="font-semibold text-[#1C1C1C]/80">Member 1:</span> Usman Ali – [23237]</p>
+                        <p><span className="font-semibold text-[#1C1C1C]/80">Member 2:</span> Adil Usman – [23151]</p>
+                        <p><span className="font-semibold text-[#1C1C1C]/80">Member 3:</span> Syed Rohan Shah  – [23166]</p>
+                        <p><span className="font-semibold text-[#1C1C1C]/80">Member 4:</span> Hadia Rafiq– [25195]</p>
+                        <p className="pt-1 text-[#1C1C1C]/50 text-xs">(B.S. Computer Science — Iqra University)</p>
                     </CardContent>
                 </Card>
 
                 {/* Supervisor Card */}
-                <Card className="shadow-md border-pink-200/60 bg-white hover:scale-105 duration-300"
+                <Card className="shadow-lg border-none bg-white hover:scale-105 duration-300"
                     style={{
-                        background: "linear-gradient(135deg, #FDF3F8 0%, #FFFFFF 100%)",
+                        background: "linear-gradient(135deg,  #6B7A4C 0%, #F5F5DC 100%)",
                     }}
                 >
                     <CardHeader>
-                        <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-gradient-to-r from-[#A86CE3] to-[#EF5BA1] text-white shadow-md">
+                        <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-gradient-to-r  from-[#4F5D3A] to-[#6B7A4C] text-white shadow-md">
                             <UserCheck className="w-6 h-6" />
                         </div>
-                        <CardTitle className="mt-4 text-xl font-bold text-gray-800">
+                        <CardTitle className="mt-4 text-xl font-bold text-[#1C1C1C]/90">
                             Supervisor
                         </CardTitle>
                     </CardHeader>
@@ -97,9 +98,9 @@ export default function AboutSection() {
 
             {/* Bottom University Badge */}
             <div className="text-center mt-12 hover:scale-105 duration-300">
-                <div className="inline-flex items-center gap-3 px-6 py-3 rounded-full bg-white shadow border border-pink-200/50">
-                    <GraduationCap className="w-5 h-5 text-purple-600" />
-                    <span className="font-medium text-gray-700">
+                <div className="inline-flex items-center gap-3 px-6 py-3 rounded-full bg-[#1C1C1C]/80 shadow-lg border border-none">
+                    <GraduationCap className="w-5 h-5 text-[#6B7A4C]" />
+                    <span className="font-medium text-[#F5F5DC]">
                         Final Year Project — B.S. Computer Science, Iqra University
                     </span>
                 </div>

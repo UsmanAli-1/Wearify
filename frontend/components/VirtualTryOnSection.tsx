@@ -54,15 +54,15 @@ export default function UploadTryOnSection() {
     }
 
     return (
-        <section className="w-full px-6 md:px-20 py-8 flex flex-col gap-5 bg-gradient-to-r from-[#C8B8FF] to-[#E9D2E7]">
-            <h1 className="m-auto md:text-5xl text-3xl font-bold text-[#3A2154]">
+        <section className="w-full px-6 md:px-20 py-8 flex flex-col gap-5 bg-gradient-to-r  from-[#4F5D3A] to-[#6B7A4C]">
+            <h1 className="m-auto md:text-5xl text-3xl font-bold text-[#1C1C1C]">
                 Virtual Try On
             </h1>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 {/* LEFT */}
                 <div className="flex flex-col gap-6">
-                    <Card className="bg-white/40 rounded-2xl p-3 max-w-xl">
+                    <Card className="bg-[#1C1C1C]/50 rounded-2xl p-3 max-w-xl">
                         <CardContent className="flex gap-3 overflow-x-scroll no-scrollbar">
                             {[
                                 "/images/img1.png",
@@ -85,7 +85,7 @@ export default function UploadTryOnSection() {
                     </Card>
 
                     {/* Upload */}
-                    <Card className="bg-white rounded-3xl p-6 h-[285px] flex flex-col items-center justify-center text-center max-w-xl">
+                    <Card className="bg-[#F5F5DC] rounded-3xl p-6 h-[285px] flex flex-col items-center justify-center text-center max-w-xl">
                         <h3 className="font-semibold">Upload Your Photo</h3>
                         <p className="text-gray-500 text-xs">
                             PNG, JPG, JPEG up to 10MB
@@ -115,7 +115,7 @@ export default function UploadTryOnSection() {
                 </div>
 
                 {/* RIGHT */}
-                <Card className="bg-white rounded-3xl p-6 h-[446px] flex items-center justify-center">
+                <Card className="bg-[#F5F5DC] rounded-3xl p-6 h-[446px] flex items-center justify-center">
                     <div className="w-full h-full border-2 border-dashed rounded-2xl flex items-center justify-center">
                         {uploadedImage ? (
                             <Image
@@ -138,9 +138,9 @@ export default function UploadTryOnSection() {
             <div className="flex justify-center">
                 <Button
                     disabled={!isLoggedIn}
-                    className={`px-32 py-6 rounded-full text-white ${isLoggedIn
-                        ? "bg-gradient-to-r from-[#9734E6] to-[#E8479C] cursor-pointer"
-                        : "bg-gradient-to-r from-[#9734E6] to-[#E8479C] cursor-not-allowed"
+                    className={`px-32 py-6 rounded-full text-[#F5F5DC] shadow-2xl ${isLoggedIn
+                        ? "bg-[#1C1C1C] cursor-pointer"
+                        : "bg-[#1C1C1C] cursor-not-allowed"
                         }`}
                     onClick={handleImageCheck}
                 >

@@ -36,8 +36,8 @@ export default function AiPoweredFeatures() {
     ];
 
     return (
-        <section className="w-full px-6 md:px-20 py-13">
-            <h2 className="text-center md:text-4xl text-3xl font-bold mb-3">
+        <section className="w-full px-6 md:px-20 py-13 bg-[#F5F5DC]">
+            <h2 className="text-center md:text-4xl text-3xl font-bold mb-3 text-[#1C1C1C]">
                 AI-Powered Features
             </h2>
             <p className="text-center text-gray-500 mb-12">
@@ -48,25 +48,25 @@ export default function AiPoweredFeatures() {
                 {features.map((feat, i) => (
                     <Card
                         key={i}
-                        className="shadow-md  border border-gray-300/20 bg-white hover:shadow-md transition hover:scale-105 duration-300"
+                        className="shadow-xl transition hover:scale-105 duration-300 border-none"
                         style={{
-                            background: "linear-gradient(135deg, #FDF3F8 0%, #FFFFFF 100%)",
+                            background: "linear-gradient(135deg,  #6B7A4C 0%, #F5F5DC 100%)",
                         }}
                     >
                         <CardContent className=" "
 
                         >
                             {/* Gradient Icon */}
-                            <div className="w-12 h-12 rounded-xl flex items-center justify-center mb-4 text-white text-xl"
+                            <div className="w-12 h-12 rounded-xl flex items-center justify-center mb-4 text-white text-xl shadow-lg"
                                 style={{
-                                    background: "linear-gradient(135deg, #A86CE3 0%, #EF5BA1 100%)",
+                                    background: "linear-gradient(135deg, #4F5D3A 0%, #6B7A4C 100%)",
                                 }}
                             >
                                 <FontAwesomeIcon icon={feat.icon} />
                             </div>
 
-                            <h3 className="font-semibold text-lg mb-2">{feat.title}</h3>
-                            <p className="text-gray-500 text-sm leading-relaxed">{feat.desc}</p>
+                            <h3 className="font-semibold text-lg mb-2 text-[#1C1C1C]/90">{feat.title}</h3>
+                            <p className="text-gray-700 text-sm leading-relaxed ">{feat.desc}</p>
                         </CardContent>
                     </Card>
                 ))}

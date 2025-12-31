@@ -112,21 +112,28 @@ export default function Header() {
 
     const linkClass = (id: string) =>
         `relative transition ${pathname === "/" && activeSection === id
-            ? "bg-gradient-to-r from-purple-500 to-pink-500 bg-clip-text text-transparent font-semibold"
-            : "text-black"
+            ? "bg-gradient-to-r from-[#6B7A4C] to-[#E6D5B8] bg-clip-text text-transparent font-semibold"
+            : "text-[#FFFFFF]"
         }`;
+
+    const mobileLinkClass = (id: string) =>
+        `px-4 py-2 rounded-xl transition ${pathname === "/" && activeSection === id
+            ? "bg-gradient-to-r  from-[#4F5D3A] to-[#E6D5B8]/80 text-[#E6D5B8] font-semibold"
+            : "text-white"
+        }`;
+
     return (
         <header className="fixed top-5 left-0 right-0 z-50 flex justify-center pointer-events-none">
             {/* Header Card */}
-            <div className="pointer-events-auto w-[92%] md:w-[80%] max-w-7xl bg-white/95 backdrop-blur-md rounded-2xl shadow-lg">
+            <div className="pointer-events-auto w-[92%] md:w-[80%] max-w-7xl bg-[#1C1C1C]/30 backdrop-blur-md rounded-2xl shadow-lg">
                 <nav className="flex items-center justify-between px-6 md:px-8">
 
                     {/* Logo */}
                     <a href="/" className="flex items-center hover:scale-105  transition">
                         <Image
-                            src="/images/logo1.png"
+                            src="/images/logo12.png"
                             alt="Logo"
-                            width={65}
+                            width={45}
                             height={0}
                             className="object-cover py-2"
                         />
@@ -143,7 +150,7 @@ export default function Header() {
                             >
                                 {link.label}
                                 {pathname === "/" && activeSection === link.id && (
-                                    <span className="absolute left-0 -bottom-1 w-full h-[2px] bg-gradient-to-r from-purple-500 to-pink-500 rounded" />
+                                    <span className="absolute left-0 -bottom-1 w-full h-[2px] bg-gradient-to-r from-[#6B7A4C] to-[#E6D5B8] rounded" />
                                 )}
                             </a>
                         ))}
@@ -154,8 +161,8 @@ export default function Header() {
 
                         {/* Points */}
                         {user?.points != null && (
-                            <div className="hidden md:flex items-center gap-2 bg-black text-white px-3 py-1 rounded-lg">
-                                <FontAwesomeIcon icon={faGem} className="text-purple-400 text-sm" />
+                            <div className="hidden md:flex items-center gap-2 bg-[#1C1C1C] text-[#E6D5B8] px-3 py-1 rounded-lg">
+                                <FontAwesomeIcon icon={faGem} className="text-[#6B7A4C] text-sm" />
                                 <span className="text-sm font-medium">{user.points}</span>
                             </div>
                         )}
@@ -164,15 +171,18 @@ export default function Header() {
                         {user ? (
                             <Button
                                 onClick={handleSignOut}
-                                className="hidden md:block rounded-full bg-gradient-to-r from-purple-500/40 to-pink-500/40 text-black hover:scale-105 duration-300"
+                                className="hidden md:block rounded-full bg-gradient-to-r from-[#4F5D3A] to-[#6B7A4C]
+                                hover:from-[#3E4A2F] hover:to-[#5F6F3E] text-black hover:scale-105 duration-300"
                             >
                                 Sign Out
                             </Button>
                         ) : (
-                            
+
                             <Button
-                            variant="secondary"
-                            className="hidden shadow-md md:block rounded-full bg-gradient-to-r from-purple-500/40 to-pink-500/40 text-black hover:scale-105 duration-300 ">
+                                variant="secondary"
+                                className="hidden shadow-md md:block rounded-full bg-gradient-to-r from-[#4F5D3A] to-[#6B7A4C]
+                                hover:from-[#3E4A2F] hover:to-[#5F6F3E] text-black hover:scale-105 duration-300"
+                            >
                                 <a href="/signin">Sign In / Sign Up</a>
                             </Button>
                         )}
@@ -182,7 +192,7 @@ export default function Header() {
                             <Button
                                 variant="outline"
                                 onClick={toggleMenu}
-                                className="p-2 rounded-md"
+                                className="p-2 rounded-md bg-gradient-to-r  from-[#4F5D3A]/50 to-[#E6D5B8]/50 text-[#1C1C1C] border-none"
                             >
                                 <FontAwesomeIcon icon={isOpen ? faXmark : faBars} size="lg" />
                             </Button>
@@ -193,10 +203,10 @@ export default function Header() {
 
             {/* Mobile Menu */}
             <div
-                className={`md:hidden fixed top-[90px] left-1/2 -translate-x-1/2 w-[92%] bg-white rounded-2xl shadow-lg overflow-hidden transition-all duration-300 ${isOpen ? "max-h-screen py-4" : "max-h-0"
+                className={`pointer-events-auto md:hidden fixed top-[95px] left-1/2 -translate-x-1/2 w-[92%] bg-[#1C1C1C]/30 backdrop-blur-md rounded-2xl shadow-lg overflow-hidden transition-all duration-300 ${isOpen ? "max-h-screen py-4" : "max-h-0"
                     }`}
             >
-                <div className="flex flex-col gap-4 px-6 font-medium">
+                <div className="flex flex-col  px-6 font-medium">
                     {links.map((link) => (
                         <a
                             key={link.id}
@@ -205,21 +215,22 @@ export default function Header() {
                                 setActiveSection(link.id);
                                 toggleMenu();
                             }}
-                            className={linkClass(link.id)}
+                            className={mobileLinkClass(link.id)}
                         >
                             {link.label}
                         </a>
+
                     ))}
 
                     {user ? (
                         <Button
                             onClick={handleSignOut}
-                            className="rounded-full bg-gradient-to-r from-purple-500/40 to-pink-500/40 text-black mt-2"
+                            className="rounded-full bg-gradient-to-r from-[#4F5D3A] to-[#6B7A4C] text-black mt-2"
                         >
                             Sign Out
                         </Button>
                     ) : (
-                        <Button className="rounded-full bg-gradient-to-r from-purple-500/40 to-pink-500/40 text-black mt-2">
+                        <Button className="rounded-full bg-gradient-to-r from-[#4F5D3A] to-[#6B7A4C] text-black mt-2">
                             <a href="/signin">Sign In / Sign Up</a>
                         </Button>
                     )}

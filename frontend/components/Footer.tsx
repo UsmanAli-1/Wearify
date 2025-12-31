@@ -11,7 +11,7 @@ import {
 
 export default function Footer() {
     return (
-        <footer className="w-full bg-gradient-to-r from-[#C8B8FF] to-[#E9D2E7]/20" >
+        <footer className="w-full bg-gradient-to-r from-[#5F6F3E] to-[#9EAB7A]/80 " >
             <div className="max-w-7xl mx-auto px-6 lg:px-8 py-10">
 
                 {/* === TOP GRID === */}
@@ -23,7 +23,7 @@ export default function Footer() {
                             {/* Logo Image */}
                             <div className=" flex items-center justify-center">
                                 <Image
-                                    src="/images/logo1.png"
+                                    src="/images/logo12.png"
                                     alt="Wearify Logo"
                                     width={65}
                                     height={0}
@@ -33,22 +33,22 @@ export default function Footer() {
 
                         </div>
 
-                        <p className="text-gray-600 text-sm max-w-xs">
+                        <p className="text-gray-700 text-sm max-w-xs">
                             Revolutionizing online fashion shopping with AI-powered virtual try-ons.
                         </p>
 
                         {/* SOCIAL ICONS */}
                         <div className="flex gap-2 pt-2">
-                            <a className="text-gray-700 hover:text-gray-900 transition">
+                            <a className="text-gray-800 hover:text-gray-900 transition">
                                 <FontAwesomeIcon icon={faFacebookF} className="w-4 h-4" />
                             </a>
-                            <a className="text-gray-700 hover:text-gray-900 transition">
+                            <a className="text-gray-800 hover:text-gray-900 transition">
                                 <FontAwesomeIcon icon={faInstagram} className="w-4 h-4" />
                             </a>
-                            <a className="text-gray-700 hover:text-gray-900 transition">
+                            <a className="text-gray-800 hover:text-gray-900 transition">
                                 <FontAwesomeIcon icon={faTwitter} className="w-4 h-4" />
                             </a>
-                            <a className="text-gray-700 hover:text-gray-900 transition">
+                            <a className="text-gray-800 hover:text-gray-900 transition">
                                 <FontAwesomeIcon icon={faLinkedinIn} className="w-4 h-4" />
                             </a>
                         </div>
@@ -56,8 +56,8 @@ export default function Footer() {
 
                     {/* PRODUCT LINKS */}
                     <div>
-                        <h4 className="text-lg font-semibold text-gray-900 mb-4">Product</h4>
-                        <ul className="space-y-3 text-sm text-gray-600">
+                        <h4 className="text-lg font-semibold text-[#1C1C1C]/90 mb-4">Product</h4>
+                        <ul className="space-y-3 text-sm text-gray-700">
                             <li><a className="hover:text-gray-900" href="#tryon">AI Try-On</a></li>
                             <li><a className="hover:text-gray-900" href="about">Features</a></li>
                             <li><a className="hover:text-gray-900" href="howitwork">How It Works</a></li>
@@ -68,8 +68,8 @@ export default function Footer() {
 
                     {/* COMPANY LINKS */}
                     <div>
-                        <h4 className="text-lg font-semibold text-gray-900 mb-4">Company</h4>
-                        <ul className="space-y-3 text-sm text-gray-600">
+                        <h4 className="text-lg font-semibold text-[#1C1C1C]/90 mb-4">Company</h4>
+                        <ul className="space-y-3 text-sm text-gray-700">
                             <li><a className="hover:text-gray-900" >About Us</a></li>
                             <li><a className="hover:text-gray-900">Careers</a></li>
                             <li><a className="hover:text-gray-900">Blog</a></li>
@@ -78,8 +78,8 @@ export default function Footer() {
 
                     {/* SUPPORT LINKS */}
                     <div>
-                        <h4 className="text-lg font-semibold text-gray-900 mb-4">Support</h4>
-                        <ul className="space-y-3 text-sm text-gray-600">
+                        <h4 className="text-lg font-semibold text-[#1C1C1C]/90 mb-4">Support</h4>
+                        <ul className="space-y-3 text-sm text-gray-700">
                             <li><a className="hover:text-gray-900">Help Center</a></li>
                             <li><a className="hover:text-gray-900">Contact Us</a></li>
                             <li><a className="hover:text-gray-900">Privacy Policy</a></li>
@@ -89,10 +89,10 @@ export default function Footer() {
                 </div>
 
                 {/* DIVIDER */}
-                <div className="mt-13 mb-8 border-t border-gray-300"></div>
+                <div className="mt-13 mb-8 border-t border-[#E6D5B8]"></div>
 
                 {/* BOTTOM COPYRIGHT */}
-                <div className="text-sm text-gray-600">
+                <div className="text-sm text-gray-700">
                     © 2025 Wearify. Virtual AI Try-On.
                     <br />All rights reserved.
                 </div>

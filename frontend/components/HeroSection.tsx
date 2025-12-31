@@ -11,35 +11,36 @@ export default function HeroSection() {
     const [showVideo, setShowVideo] = useState(false);
     return (
         <>  
-            <section className="w-full pt-30 flex flex-col md:flex-row items-center justify-between px-4 md:px-12 py-14 bg-gradient-to-r from-[#C8B8FF] to-[#E9D2E7]/20">
+            <section className="w-full pt-30 flex flex-col md:flex-row items-center justify-between px-4 md:px-12 py-14 bg-#E6D5B8 bg-gradient-to-r 
+            bg-gradient-to-r from-[#5F6F3E]/80 to-[#9EAB7A]/50 ">
 
                 {/* Left */}
                 <div className="flex flex-col max-w-xl gap-4">
 
                     {/* Badge */}
                     <div className="relative md:pl-0 pl-2 w-fit">
-                        <div className="absolute md:-left-10 md:-top-12 -left-2 -top-12 w-28 h-28 bg-[#DDD1F5] rounded-full " />
-                        <CardContent className=" px-6 py-2 text-sm font-semibold text-[#9B54DA] relative z-10 bg-white/80 backdrop-blur-md shadow-sm rounded-full">
+                        <div className="absolute md:-left-10 md:-top-12 -left-2 -top-12 w-28 h-28 bg-gradient-to-r from-[#6B7A4C] to-[#D9C6A3]/70 rounded-full shadow-md" />
+                        <CardContent className=" px-6 py-2 text-sm font-semibold text-[#515F3B] relative z-10 bg-[#E6D5B8] backdrop-blur-md shadow-sm rounded-full">
                             AI-Powered Fashion
                         </CardContent>
                     </div>
 
-                    <h1 className="text-4xl md:px-0 md:text-5xl font-bold leading-tight">
+                    <h1 className="text-4xl md:px-0 md:text-5xl font-bold leading-tight text-[#1C1C1C]/90">
                         Transform Your Shopping Experience{" "}
-                        <span className="bg-gradient-to-b from-[#CC40B6] to-[#E64EA4] text-transparent bg-clip-text">
+                        <span className="bg-gradient-to-r  from-[#4F5D3A] to-[#6B7A4C] text-transparent bg-clip-text">
                             Virtually
                         </span>{" "}
                         with AI
                     </h1>
 
-                    <p className="text-gray-600  text-lg">
+                    <p className="text-[#1C1C1C]/70 text-lg">
                         Experience the future of fashion with our extraordinary AI technology. Try on thousands of outfits instantly, find your perfect fit, and shop with confidence from the confort of your home .
                     </p>
 
                     <div className="md:flex m-auto md:m-0 gap-4 mt-4 ">
                         <Button
                             className="rounded-full text-white md:w-47 w-70 py-6 text-sm flex items-center gap-2
-                            bg-gradient-to-r from-[#9734E6] to-[#E8479C] shadow-md hover:scale-105  duration-300"
+                            bg-gradient-to-r  from-[#4F5D3A] to-[#6B7A4C]/30 shadow-xl hover:scale-105  duration-300"
                         >
                             <FontAwesomeIcon icon={faCamera} className="w-3 h-3" />
                             <a href="#tryon">
@@ -50,7 +51,7 @@ export default function HeroSection() {
                         <Button
                             variant="outline"
                             onClick={() => setShowVideo(true)}
-                            className="rounded-full bg-white text-black/70 md:w-35 w-70 py-6 md:mt-0 mt-2  text-sm flex items-center gap-2 shadow-sm border-none hover:scale-105  duration-300"
+                            className="rounded-full bg-[#1C1C1C] text-[#E6D5B8] hover:text-[#1C1C1C] hover:bg-[#E6D5B8] md:w-35 w-70 py-6 md:mt-0 mt-2  text-sm flex items-center gap-2 shadow-2xl border-none hover:scale-105  duration-300"
                         >
                             <FontAwesomeIcon icon={faPlay} className="w-3 h-3" />
                             Watch Demo
@@ -58,7 +59,7 @@ export default function HeroSection() {
                     </div>
 
                     {/* Stats */}
-                    <div className="flex md:gap-10 gap-5 text-gray-700 mt-2 md:my-0 my-6 font-semibold md:m-0 m-auto ">
+                    <div className="flex md:gap-10 gap-5 text-[#1C1C1C] mt-2 md:my-0 my-6 font-semibold md:m-0 m-auto ">
                         <div>
                             <span className="text-2xl font-bold">500k+</span><br />Happy Users
                         </div>
@@ -72,7 +73,7 @@ export default function HeroSection() {
                 </div>
 
                 {/* Right */}
-                <Card className="relative w-full max-w-xl m-auto bg-[#F4E8FE] p-4 rounded-3xl shadow-xl">
+                <Card className="relative w-full max-w-xl m-auto bg-[] p-4 rounded-3xl shadow-xl">
                     <CardContent className="rounded-3xl bg-white overflow-hidden p-0">
                         <Image
                             src="/images/c1.png"
@@ -86,9 +87,9 @@ export default function HeroSection() {
             </section>
 
             {/* Sub Section */}
-            <section className="w-full text-center py-10 md:px-6 px-4 ">
-                <h2 className="md:text-5xl text-4xl font-bold text-[#3A2154]">Experience Virtual Try-On AI —</h2>
-                <p className="text-[#EC4899] md:text-4xl text-3xl font-bold mt-5">Powered by Wearify AI</p>
+            <section className="w-full text-center py-10 md:px-6 px-4 bg-[#F5F5DC]/90 ">
+                <h2 className="md:text-5xl text-4xl font-bold text-[#1C1C1C]">Experience Virtual Try-On AI —</h2>
+                <p className="text-[#515F3B] md:text-4xl text-3xl font-bold mt-5">Powered by Wearify AI</p>
                 <p className="max-w-4xl mx-auto text-gray-600 mt-4">
                     Upload your photo and instantly try on stylish  outfits with our advanced virtual fitting room.
                     Enjoy a seamless, ultra-realistic try-on experience designed to help you discover your perfect look.
