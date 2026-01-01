@@ -23,9 +23,9 @@ export default function Footer() {
                             {/* Logo Image */}
                             <div className=" flex items-center justify-center">
                                 <Image
-                                    src="/images/logo12.png"
+                                    src="/images/logo5.png"
                                     alt="Wearify Logo"
-                                    width={65}
+                                    width={150}
                                     height={0}
                                     className=""
                                 />

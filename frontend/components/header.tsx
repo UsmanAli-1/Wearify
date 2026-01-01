@@ -111,8 +111,8 @@ export default function Header() {
     ];
 
     const linkClass = (id: string) =>
-        `relative transition ${pathname === "/" && activeSection === id
-            ? "bg-gradient-to-r from-[#6B7A4C] to-[#E6D5B8] bg-clip-text text-transparent font-semibold"
+        `px-2 py-1 rounded-md relative transition ${pathname === "/" && activeSection === id
+            ? "bg-gradient-to-r  from-[#4F5D3A] to-[#E6D5B8]/80 text-[#1C1C1C]/80 font-semibold"
             : "text-[#FFFFFF]"
         }`;
 
@@ -131,9 +131,9 @@ export default function Header() {
                     {/* Logo */}
                     <a href="/" className="flex items-center hover:scale-105  transition">
                         <Image
-                            src="/images/logo12.png"
+                            src="/images/logo5.png"
                             alt="Logo"
-                            width={45}
+                            width={160}
                             height={0}
                             className="object-cover py-2"
                         />
@@ -149,9 +149,9 @@ export default function Header() {
                                 className={linkClass(link.id)}
                             >
                                 {link.label}
-                                {pathname === "/" && activeSection === link.id && (
+                                {/* {pathname === "/" && activeSection === link.id && (
                                     <span className="absolute left-0 -bottom-1 w-full h-[2px] bg-gradient-to-r from-[#6B7A4C] to-[#E6D5B8] rounded" />
-                                )}
+                                )} */}
                             </a>
                         ))}
                     </div>
