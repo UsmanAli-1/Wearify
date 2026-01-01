@@ -5,7 +5,7 @@ import { Button } from "@/ui/button"
 import { Card, CardContent } from "@/ui/card"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
 import { faCamera, faPlay } from "@fortawesome/free-solid-svg-icons"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import Motion from "@/components/Motion";
 import { fadeUp } from "@/lib/motion";
 import { fadeIn } from "@/lib/motion";
@@ -15,6 +15,22 @@ import { popUpslow } from "@/lib/motion";
 
 export default function HeroSection() {
     const [showVideo, setShowVideo] = useState(false);
+
+    const images = [
+        "/images/hero8.jpeg",
+        "/images/hero6.jpeg",
+    ];
+
+    const [index, setIndex] = useState(0);
+
+    useEffect(() => {
+        const interval = setInterval(() => {
+            setIndex((prev) => (prev + 1) % images.length);
+        }, 1000); // ⏱ 1 second
+
+        return () => clearInterval(interval);
+    }, []);
+
     return (
         <>
             <section className="w-full pt-30 flex flex-col md:flex-row items-center justify-evenly px-4 md:px-12 py-14 bg-#E6D5B8 bg-gradient-to-r 
@@ -88,19 +104,27 @@ export default function HeroSection() {
                 </Motion>
 
                 {/* Right */}
-                <Motion variant={popUpslow}>
-                    <Card className="relative w-full max-w-md m-auto bg-[] p-4 rounded-3xl shadow-xl hover:scale-105 duration-300 transition">
-                        <CardContent className="rounded-2xl overflow-hidden p-0">
-                            <Image
-                                src="/images/hero8.jpeg"
-                                alt="Model"
-                                width={700}
-                                height={700}
-                                className="rounded-2xl object-cover "
-                            />
+                <Motion
+                    variant={popUpslow}
+                    className="w-full md:w-auto flex justify-center"
+                >
+                    <Card className="relative w-[320px] md:w-[420px] lg:w-[480px] p-4 rounded-3xl shadow-xl hover:scale-105 transition duration-300">
+                        <CardContent className="relative rounded-2xl overflow-hidden p-0 h-[400px] " >
+                            {images.map((src, i) => (
+                                <Image
+                                    key={i}
+                                    src={src}
+                                    alt="Model"
+                                    fill
+                                    priority={i === 0}
+                                    className={`object-cover rounded-2xl absolute transition-opacity duration-700 ${i === index ? "opacity-100" : "opacity-0"
+                                        }`}
+                                />
+                            ))}
                         </CardContent>
                     </Card>
                 </Motion>
+
             </section>
 
             {/* Sub Section */}
