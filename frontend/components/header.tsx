@@ -7,6 +7,11 @@ import { Button } from "@/ui/button";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faBars, faXmark, faGem } from "@fortawesome/free-solid-svg-icons";
 import { useRouter } from "next/navigation";
+import Motion from "@/components/Motion";
+import { fadeUp } from "@/lib/motion";
+import { fadeIn } from "@/lib/motion";
+import { popUp } from "@/lib/motion";
+import { popUpslow } from "@/lib/motion";
 
 
 export default function Header() {
@@ -129,29 +134,34 @@ export default function Header() {
                 <nav className="flex items-center justify-between px-6 md:px-8 ">
 
                     {/* Logo */}
-                    <a href="/" className="flex items-center hover:scale-105  transition">
-                        <Image
-                            src="/images/logo5.png"
-                            alt="Logo"
-                            width={160}
-                            height={0}
-                            className="object-cover py-2"
-                        />
-                    </a>
+                    <Motion variant={fadeIn}>
+                        <a href="/" className="flex items-center hover:scale-110  transition">
+                            <Image
+                                src="/images/logo5.png"
+                                alt="Logo"
+                                width={160}
+                                height={0}
+                                className="object-cover py-2"
+                            />
+                        </a>
+                    </Motion>
+
 
                     {/* Desktop Links */}
-                    <div className="hidden md:flex gap-6 font-medium relative ">
-                        {links.map((link) => (
-                            <a
-                                key={link.id}
-                                href={`/#${link.id}`}
-                                onClick={() => setActiveSection(link.id)}
-                                className={linkClass(link.id)}
-                            >
-                                {link.label}
-                            </a>
-                        ))}
-                    </div>
+                    <Motion variant={popUp}>
+                        <div className="hidden md:flex gap-6 font-medium relative ">
+                            {links.map((link) => (
+                                <a
+                                    key={link.id}
+                                    href={`/#${link.id}`}
+                                    onClick={() => setActiveSection(link.id)}
+                                    className={linkClass(link.id)}
+                                >
+                                    {link.label}
+                                </a>
+                            ))}
+                        </div>
+                    </Motion>
 
                     {/* Right Section */}
                     <div className="flex items-center gap-4">
@@ -165,25 +175,26 @@ export default function Header() {
                         )}
 
                         {/* Auth Button */}
-                        {user ? (
-                            <Button
-                                onClick={handleSignOut}
-                                className="hidden md:block rounded-full bg-gradient-to-r from-[#4F5D3A] to-[#6B7A4C]
+                        <Motion variant={popUpslow}>
+                            {user ? (
+                                <Button
+                                    onClick={handleSignOut}
+                                    className="hidden md:block rounded-full bg-gradient-to-r from-[#4F5D3A] to-[#6B7A4C]
                                 hover:from-[#3E4A2F] hover:to-[#5F6F3E] text-black hover:scale-105 duration-300"
-                            >
-                                Sign Out
-                            </Button>
-                        ) : (
+                                >
+                                    Sign Out
+                                </Button>
+                            ) : (
 
-                            <Button
-                                variant="secondary"
-                                className="hidden shadow-md md:block rounded-full bg-gradient-to-r from-[#4F5D3A] to-[#6B7A4C]
+                                <Button
+                                    variant="secondary"
+                                    className="hidden shadow-md md:block rounded-full bg-gradient-to-r from-[#4F5D3A] to-[#6B7A4C]
                                 hover:from-[#3E4A2F] hover:to-[#5F6F3E] text-black hover:scale-105 duration-300"
-                            >
-                                <a href="/signin">Sign In / Sign Up</a>
-                            </Button>
-                        )}
-
+                                >
+                                    <a href="/signin">Sign In / Sign Up</a>
+                                </Button>
+                            )}
+                        </Motion>
                         {/* Mobile Menu Button */}
                         <div className="md:hidden">
                             <Button
