@@ -18,9 +18,9 @@ export default function HeroSection() {
                 <div className="flex flex-col max-w-xl gap-4">
 
                     {/* Badge */}
-                    <div className="relative md:pl-0 pl-2 w-fit">
-                        <div className="absolute md:-left-10 md:-top-12 -left-2 -top-12 w-28 h-28 bg-gradient-to-r from-[#6B7A4C] to-[#D9C6A3]/70 rounded-full shadow-md" />
-                        <CardContent className=" px-6 py-2 text-sm font-semibold text-[#515F3B] relative z-10 bg-[#E6D5B8] backdrop-blur-md shadow-sm rounded-full">
+                    <div className="relative md:pl-0 pl-2 w-fit ">
+                        <div className="absolute md:-left-10 md:-top-12 -left-2 -top-12 w-28 h-28 bg-gradient-to-r from-[#6B7A4C] to-[#D9C6A3]/70 rounded-full shadow-md hover:scale-105 duration-300 transition" />
+                        <CardContent className=" px-6 py-2 text-sm font-semibold text-[#515F3B] relative z-10 bg-[#E6D5B8] backdrop-blur-md shadow-sm rounded-full hover:scale-105 duration-300 transition">
                             AI-Powered Fashion
                         </CardContent>
                     </div>
@@ -39,8 +39,8 @@ export default function HeroSection() {
 
                     <div className="md:flex m-auto md:m-0 gap-4 mt-4 ">
                         <Button
-                            className="rounded-full text-white md:w-47 w-70 py-6 text-sm flex items-center gap-2
-                            bg-gradient-to-r  from-[#4F5D3A] to-[#6B7A4C]/30 shadow-xl hover:scale-105  duration-300"
+                            className="rounded-full text-[#E6D5B8] md:w-47 w-70 py-6 text-sm flex items-center gap-2
+                            bg-gradient-to-r from-[#4F5D3A] to-[#6B7A4C]/30 shadow-xl hover:scale-105  duration-300"
                         >
                             <FontAwesomeIcon icon={faCamera} className="w-3 h-3" />
                             <a href="#tryon">
@@ -73,14 +73,14 @@ export default function HeroSection() {
                 </div>
 
                 {/* Right */}
-                <Card className="relative w-full max-w-xl m-auto bg-[] p-4 rounded-3xl shadow-xl">
-                    <CardContent className="rounded-3xl bg-white overflow-hidden p-0">
+                <Card className="relative w-full max-w-md m-auto bg-[] p-4 rounded-3xl shadow-xl hover:scale-105 duration-300 transition">
+                    <CardContent className="rounded-2xl overflow-hidden p-0">
                         <Image
-                            src="/images/c1.png"
+                            src="/images/hero6.jpeg"
                             alt="Model"
                             width={700}
                             height={700}
-                            className="rounded-2xl object-cover"
+                            className="rounded-2xl object-cover "
                         />  
                     </CardContent>
                 </Card>

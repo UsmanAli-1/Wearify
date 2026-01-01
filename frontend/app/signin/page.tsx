@@ -49,20 +49,20 @@ export default function SignIn() {
     }
     return (
         <>
-            <section>
+            <section className="bg-[#F5F5DC] h-full">
                 <div className="h-full w-full pt-27 flex items-center justify-center ">
                     <div className="max-w-5xl w-full flex flex-col md:flex-row items-center justify-between px-4 md:px-12 md:gap-45">
 
                         {/* LEFT SIDE */}
-                        <div className="-top-20 flex flex-col items-center justify-center text-center w-full md:w-1/2">
+                        <div className="-top-20 flex flex-col items-center justify-center text-center w-full h-full md:w-1/2">
 
                             {/* Bigger Side Logo */}
                             <Image
-                                src="/images/logo12.png"
+                                src="/images/logo3.png"
                                 alt="Side Logo"
-                                width={240}
-                                height={240}
-                                className="w-10 hidden md:block md:w-64 lg:w-60 object-contain md:mb-4 mx-auto"
+                                width={340}
+                                height={340}
+                                className="hidden md:block md:w-64 lg:w-80 object-contain md:mb-4 mx-auto"
                             />
 
 

@@ -99,7 +99,7 @@ export default function AboutSection() {
             {/* Bottom University Badge */}
             <div className="text-center mt-12 hover:scale-105 duration-300">
                 <div className="inline-flex items-center gap-3 px-6 py-3 rounded-full bg-[#1C1C1C]/80 shadow-lg border border-none">
-                    <GraduationCap className="w-5 h-5 text-[#6B7A4C]" />
+                    <GraduationCap className="w-5 h-5 text-[#F5F5DC]" />
                     <span className="font-medium text-[#F5F5DC]">
                         Final Year Project — B.S. Computer Science, Iqra University
                     </span>

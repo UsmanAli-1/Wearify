@@ -62,18 +62,13 @@ export default function SignUp() {
                         {/* LEFT SIDE */}
                         <div className="flex flex-col items-center justify-center text-center w-full md:w-1/2">
 
-                            {/* Gradient Brand Name */}
-                            {/* <h1 className="hidden md:block text-5xl font-bold bg-gradient-to-r from-pink-500 to-purple-600 bg-clip-text text-transparent pb-4">
-                                Wearify
-                            </h1> */}
-
                             {/* Logo */}
                             <Image
-                                src="/images/logo12.png"
+                                src="/images/logo3.png"
                                 alt="Side Logo"
-                                width={240}
-                                height={240}
-                                className="w-10 hidden md:block md:w-64 lg:w-60 object-contain md:mb-4 mx-auto"
+                                width={340}
+                                height={340}
+                                className="hidden md:block md:w-64 lg:w-80 object-contain md:mb-4 mx-auto"
                             />
 
                             {/* Login Link */}

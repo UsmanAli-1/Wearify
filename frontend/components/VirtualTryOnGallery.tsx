@@ -16,14 +16,14 @@ export default function VirtualTryOnGallery() {
 
         {/* Images */}
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-5 ">
-          {["img5.png", "img2.png", "img3.png", "img4.png"].map((src, i) => (
+          {["gg1.jpg", "gg2.jpg", "gg3.jpg", "gg4.jpg"].map((src, i) => (
             <div key={i} className="w-full rounded-xl overflow-hidden shadow-2xl hover:scale-110 duration-300 trasition">
               <Image
                 src={`/images/${src}`}
                 alt={`Gallery Image ${i + 1}`}
                 width={300}
                 height={350}
-                className="object-cover w-full h-64"
+                className="object-cover w-full h-74"
               />
             </div>
           ))}
@@ -34,7 +34,7 @@ export default function VirtualTryOnGallery() {
       <div className="w-[95%] bg-[#1C1C1C]/90 md:py-15 py-8 text-center px-6 shadow-xl rounded-2xl md:rounded-full hover:scale-105 duration-300 transition">
         <h2 className="md:text-5xl text-3xl font-bold md:mb-5 text-[#E6D5B8] ">Ready to Transform Your Shopping?</h2>
 
-        <p className="text-[#6B7A4C]/70 md:text-sm text-xs  mb-8 md:mt-0 mt-5 max-w-lg  mx-auto">
+        <p className="text-[#F5F5DC]/70 md:text-sm text-xs  mb-8 md:mt-0 mt-5 max-w-lg  mx-auto">
           Join over 500,000 people who shop smarter with AI-powered virtual try-ons
         </p>
 
@@ -48,7 +48,7 @@ export default function VirtualTryOnGallery() {
         </Button>
 
         {/* Footnote */}
-        <p className="text-xs text-[#6B7A4C]/50 mt-5">
+        <p className="text-xs text-[#F5F5DC]/70 mt-5">
           No credit card required • 3 free generations • Cancel anytime
         </p>
       </div>

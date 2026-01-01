@@ -62,30 +62,42 @@ export default function UploadTryOnSection() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 {/* LEFT */}
                 <div className="flex flex-col gap-6">
-                    <Card className="bg-[#1C1C1C]/50 rounded-2xl p-3 max-w-xl">
+                    <Card className="bg-[#1C1C1C]/50 rounded-2xl p-3 max-w-xl hover:scale-105 duration-300 transition shadow-xl">
                         <CardContent className="flex gap-3 overflow-x-scroll no-scrollbar">
                             {[
-                                "/images/img1.png",
-                                "/images/img2.png",
-                                "/images/img3.png",
-                                "/images/img1.png",
-                                "/images/img2.png",
-                                "/images/img3.png",
+                                "/images/t1.jpg",
+                                "/images/t13.jpg",
+                                "/images/t3.jpg",
+                                "/images/t4.jpg",
+                                "/images/t5.jpg",
+                                "/images/t6.jpg",
+                                "/images/t7.jpg",
+                                "/images/t8.jpg",
+                                "/images/t9.jpg",
+                                "/images/t10.jpg",
+                                "/images/t11.jpg",
+                                "/images/t14.jpg",
+                                "/images/t15.jpg",
+                                "/images/t12.jpg",
+                                "/images/t16.jpg",
                             ].map(
                                 (src, i) => (
-                                    <div
+                                    <Image
                                         key={i}
-                                        className="min-w-[95px] h-[110px] bg-white border rounded-xl flex items-center justify-center"
-                                    >
-                                        <Image src={src} alt="" width={80} height={80} />
-                                    </div>
+                                        src={src}
+                                        alt=""
+                                        width={80}
+                                        height={100}
+                                        sizes="75px"
+                                        className="z-10 rounded-xl object-cover hover:scale-110 transition-transform duration-300 cursor-pointer"
+                                    />
                                 )
                             )}
                         </CardContent>
                     </Card>
 
                     {/* Upload */}
-                    <Card className="bg-[#F5F5DC] rounded-3xl p-6 h-[285px] flex flex-col items-center justify-center text-center max-w-xl">
+                    <Card className="bg-[#F5F5DC] rounded-3xl p-6 h-[285px] flex flex-col items-center justify-center text-center max-w-xl hover:scale-105 duration-300 transition shadow-xl">
                         <h3 className="font-semibold">Upload Your Photo</h3>
                         <p className="text-gray-500 text-xs">
                             PNG, JPG, JPEG up to 10MB
@@ -115,7 +127,7 @@ export default function UploadTryOnSection() {
                 </div>
 
                 {/* RIGHT */}
-                <Card className="bg-[#F5F5DC] rounded-3xl p-6 h-[446px] flex items-center justify-center">
+                <Card className="bg-[#F5F5DC] rounded-3xl p-6 h-[446px] flex items-center justify-center hover:scale-105 duration-300 transition shadow-xl">
                     <div className="w-full h-full border-2 border-dashed rounded-2xl flex items-center justify-center">
                         {uploadedImage ? (
                             <Image
@@ -135,7 +147,7 @@ export default function UploadTryOnSection() {
             </div>
 
             {/* Generate */}
-            <div className="flex justify-center">
+            <div className="flex justify-center ">
                 <Button
                     disabled={!isLoggedIn}
                     className={`px-32 py-6 rounded-full text-[#F5F5DC] shadow-2xl ${isLoggedIn

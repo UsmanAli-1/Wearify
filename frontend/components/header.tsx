@@ -111,22 +111,22 @@ export default function Header() {
     ];
 
     const linkClass = (id: string) =>
-        `px-2 py-1 rounded-md relative transition ${pathname === "/" && activeSection === id
+        `px-2 py-1 rounded-md relative transition  ${pathname === "/" && activeSection === id
             ? "bg-gradient-to-r  from-[#4F5D3A] to-[#E6D5B8]/80 text-[#1C1C1C]/80 font-semibold"
-            : "text-[#FFFFFF]"
+            : "text-[#F5F5DC]"
         }`;
 
     const mobileLinkClass = (id: string) =>
         `px-4 py-2 rounded-xl transition ${pathname === "/" && activeSection === id
             ? "bg-gradient-to-r  from-[#4F5D3A] to-[#E6D5B8]/80 text-[#E6D5B8] font-semibold"
-            : "text-white"
+            : "text-[#F5F5DC]"
         }`;
 
     return (
         <header className="fixed top-5 left-0 right-0 z-50 flex justify-center pointer-events-none">
             {/* Header Card */}
             <div className="pointer-events-auto w-[92%] md:w-[80%] max-w-7xl bg-[#1C1C1C]/30 backdrop-blur-md rounded-2xl shadow-lg">
-                <nav className="flex items-center justify-between px-6 md:px-8">
+                <nav className="flex items-center justify-between px-6 md:px-8 ">
 
                     {/* Logo */}
                     <a href="/" className="flex items-center hover:scale-105  transition">
@@ -140,7 +140,7 @@ export default function Header() {
                     </a>
 
                     {/* Desktop Links */}
-                    <div className="hidden md:flex gap-6 font-medium relative">
+                    <div className="hidden md:flex gap-6 font-medium relative ">
                         {links.map((link) => (
                             <a
                                 key={link.id}
@@ -149,9 +149,6 @@ export default function Header() {
                                 className={linkClass(link.id)}
                             >
                                 {link.label}
-                                {/* {pathname === "/" && activeSection === link.id && (
-                                    <span className="absolute left-0 -bottom-1 w-full h-[2px] bg-gradient-to-r from-[#6B7A4C] to-[#E6D5B8] rounded" />
-                                )} */}
                             </a>
                         ))}
                     </div>
