@@ -6,6 +6,7 @@ import { Input } from "@/ui/input";
 import { Button } from "@/ui/button";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import BASE_URL from "@/config/api";
 
 
 export default function SignIn() {
@@ -27,7 +28,7 @@ export default function SignIn() {
     const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
 
-        const response = await fetch("http://localhost:4000/api/users/login", {
+        const response = await fetch(`${BASE_URL}/api/users/login`, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",

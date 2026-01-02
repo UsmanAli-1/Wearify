@@ -11,6 +11,7 @@ import { fadeUp } from "@/lib/motion";
 import { fadeIn } from "@/lib/motion";
 import { popUp } from "@/lib/motion";
 import { popUpslow } from "@/lib/motion";
+import BASE_URL from "@/config/api";
 
 
 export default function UploadTryOnSection() {
@@ -19,7 +20,7 @@ export default function UploadTryOnSection() {
 
     // Check login ONCE
     useEffect(() => {
-        fetch("http://localhost:4000/api/users/me", {
+        fetch(`${BASE_URL}/api/users/me`, {
             credentials: "include",
         })
             .then((res) => setIsLoggedIn(res.ok))
@@ -41,7 +42,7 @@ export default function UploadTryOnSection() {
             return
         }
 
-        const res = await fetch("http://localhost:4000/api/users/use-points", {
+        const res = await fetch(`${BASE_URL}/api/users/use-points`, {
             method: "POST",
             credentials: "include",
         });

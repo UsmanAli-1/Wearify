@@ -12,6 +12,7 @@ import { fadeUp } from "@/lib/motion";
 import { fadeIn } from "@/lib/motion";
 import { popUp } from "@/lib/motion";
 import { popUpslow } from "@/lib/motion";
+import BASE_URL from "@/config/api";
 
 
 export default function Header() {
@@ -39,7 +40,7 @@ export default function Header() {
     useEffect(() => {
         const fetchUser = async () => {
             try {
-                const res = await fetch("http://localhost:4000/api/users/me", {
+                const res = await fetch(`${BASE_URL}/api/users/me`, {
                     credentials: "include",
                 });
 
@@ -70,7 +71,7 @@ export default function Header() {
 
     // signout function 
     const handleSignOut = async () => {
-        await fetch("http://localhost:4000/api/users/logout", {
+        await fetch(`${BASE_URL}/api/users/logout`, {
             method: "POST",
             credentials: "include",
         });
@@ -164,11 +165,11 @@ export default function Header() {
                     </Motion>
 
                     {/* Right Section */}
-                    <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-2">
 
                         {/* Points */}
                         {user?.points != null && (
-                            <div className="hidden md:flex items-center gap-2 bg-[#1C1C1C] text-[#E6D5B8] px-3 py-1 rounded-lg">
+                            <div className="md:flex items-center gap-2 bg-[#1C1C1C] text-[#E6D5B8] px-3 py-1 rounded-lg">
                                 <FontAwesomeIcon icon={faGem} className="text-[#6B7A4C] text-sm" />
                                 <span className="text-sm font-medium">{user.points}</span>
                             </div>
@@ -229,6 +230,7 @@ export default function Header() {
                         </a>
 
                     ))}
+
 
                     {user ? (
                         <Button

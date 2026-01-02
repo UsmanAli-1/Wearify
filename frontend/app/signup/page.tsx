@@ -7,6 +7,7 @@ import { Button } from "@/ui/button";
 import { useState } from "react";
 // import bcrypt from 'bcrypt';
 import toast from "react-hot-toast";
+import BASE_URL from "@/config/api";
 
 
 export default function SignUp() {
@@ -30,7 +31,7 @@ export default function SignUp() {
         e.preventDefault();
 
         // Send data to backend
-        const response = await fetch("http://localhost:4000/api/users", {
+        const response = await fetch(`${BASE_URL}/api/users`, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
