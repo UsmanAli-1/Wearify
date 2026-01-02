@@ -164,7 +164,7 @@ export default function UploadTryOnSection() {
                 <Motion variant={fadeUp}>
                     <Button
                         disabled={!isLoggedIn}
-                        className={`px-32 py-6 rounded-full text-[#F5F5DC] shadow-2xl ${isLoggedIn
+                        className={`px-32 py-6 rounded-full text-[#F5F5DC] shadow-2xl hover:scale-105 duration-300 transition ${isLoggedIn
                             ? "bg-[#1C1C1C] cursor-pointer"
                             : "bg-[#1C1C1C] cursor-not-allowed"
                             }`}

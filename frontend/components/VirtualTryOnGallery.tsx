@@ -26,14 +26,14 @@ export default function VirtualTryOnGallery() {
         {/* Images */}
         <div className="grid grid-cols-2  md:grid-cols-4 gap-5 ">
           {["gg1.jpg", "gg2.jpg", "gg3.jpg", "gg4.jpg"].map((src, i) => (
-            <Motion variant={popUpslow}>
-              <div key={i} className="w-full rounded-xl overflow-hidden shadow-2xl hover:scale-110 duration-300 trasition">
+            <Motion key={i} variant={popUpslow}>
+              <div className="w-full rounded-xl overflow-hidden shadow-2xl hover:scale-110 duration-300 trasition">
                 <Image
                   src={`/images/${src}`}
                   alt={`Gallery Image ${i + 1}`}
                   width={300}
                   height={350}
-                  className="object-cover w-full h-80"
+                  className="object-cover w-full h-80 rounded-xl"
                 />
               </div>
             </Motion>

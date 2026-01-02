@@ -7,7 +7,7 @@ import { fadeUp } from "@/lib/motion";
 import { fadeIn } from "@/lib/motion";
 import { popUp } from "@/lib/motion";
 import { popUpslow } from "@/lib/motion";
-
+import { motion } from "framer-motion";
 
 export default function AboutSection() {
     return (
@@ -30,12 +30,17 @@ export default function AboutSection() {
                         You can also try on any garment you like — our Virtual Try-On technology
                         shows a realistic preview of how it will look on you.
                         <br /><br />
-                        <Motion variant={popUp}>
+                        <motion.span
+                            initial={{ scale: 0.5, opacity: 0 }}
+                            whileInView={{ scale: 1, opacity: 1 }}
+                            transition={{ duration: 0.5 }}
+                            className="block mt-2"
+                        >
                             <span className="font-bold text-gray-700">Our goal is simple:</span><br />
                             <span className="font-semibold text-gray-700">
                                 <i>"Make online shopping personal, smart, and confidence-boosting."</i>
                             </span>
-                        </Motion>
+                        </motion.span>
                     </p>
                 </Motion>
             </div>

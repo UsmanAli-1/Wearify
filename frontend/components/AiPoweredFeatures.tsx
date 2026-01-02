@@ -54,33 +54,37 @@ export default function AiPoweredFeatures() {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-8">
                 {features.map((feat, i) => (
-                    <Motion variant={popUpslow}>
+                    <Motion key={i} variant={popUpslow}>
                         <Card
-                            key={i}
                             className="shadow-xl transition hover:scale-105 duration-300 border-none"
                             style={{
-                                background: "linear-gradient(135deg,  #6B7A4C 0%, #F5F5DC 100%)",
+                                background: "linear-gradient(135deg, #6B7A4C 0%, #F5F5DC 100%)",
                             }}
                         >
-                            <CardContent className=" "
-
-                            >
+                            <CardContent>
                                 {/* Gradient Icon */}
-                                <div className="w-12 h-12 rounded-xl flex items-center justify-center mb-4 text-white text-xl shadow-lg"
+                                <div
+                                    className="w-12 h-12 rounded-xl flex items-center justify-center mb-4 text-white text-xl shadow-lg"
                                     style={{
-                                        background: "linear-gradient(135deg, #4F5D3A 0%, #6B7A4C 100%)",
+                                        background:
+                                            "linear-gradient(135deg, #4F5D3A 0%, #6B7A4C 100%)",
                                     }}
                                 >
                                     <FontAwesomeIcon icon={feat.icon} />
                                 </div>
 
-                                <h3 className="font-semibold text-lg mb-2 text-[#1C1C1C]/90">{feat.title}</h3>
-                                <p className="text-gray-700 text-sm leading-relaxed ">{feat.desc}</p>
+                                <h3 className="font-semibold text-lg mb-2 text-[#1C1C1C]/90">
+                                    {feat.title}
+                                </h3>
+                                <p className="text-gray-700 text-sm leading-relaxed">
+                                    {feat.desc}
+                                </p>
                             </CardContent>
                         </Card>
                     </Motion>
                 ))}
             </div>
+
         </section>
     );
 }
