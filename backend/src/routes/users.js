@@ -52,12 +52,20 @@ router.post("/login", async (req, res) => {
     )
 
     // set cookie
+    // res.cookie("token", token, {
+    //   httpOnly: true,
+    //   secure: true, // true in production (https)
+    //   sameSite: "none",
+    //   maxAge: 1 * 60 * 60 * 1000,
+    // })
+
     res.cookie("token", token, {
       httpOnly: true,
-      secure: true, // true in production (https)
-      sameSite: "none",
-      maxAge: 1 * 60 * 60 * 1000,
-    })
+      secure: process.env.NODE_ENV === "production",
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+      maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days
+    });
+
 
     // send user data
     res.status(200).json({
@@ -88,7 +96,7 @@ router.get("/me", auth, async (req, res) => {
 
 
 router.post("/use-points", auth, async (req, res) => {
-  const COST = 40; 
+  const COST = 40;
 
   const user = await User.findById(req.user.id);
 
