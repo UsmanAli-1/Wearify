@@ -148,7 +148,7 @@ export default function HeroSection() {
                     <div className=" fixed absolute top-0 w-[100%] h-[100%] z-[9999] bg-black/60 backdrop-blur-sm 
                     flex flex-col items-center justify-center  " >
                         <Button variant="outline" onClick={() => setShowVideo(false)} className="text-white bg-black/60 rounded-4xl absolute md:top-15 md:right-37 top-0 right-0 border-none">X</Button>
-                        <video autoPlay controls src="/videos/demo.mp4" className="w-250" />
+                        <video autoPlay controls src="/videos/demo2.mp4" className="w-250" />
                     </div>
                 </div>
             )}
