@@ -111,10 +111,19 @@ router.post("/use-points", auth, async (req, res) => {
 });
 
 
-router.post("/logout", (req, res) => {
-  res.clearCookie("token");
-  res.json({ message: "Logged out" });
-});
+// router.post("/logout", (req, res) => {
+//   res.clearCookie("token");
+//   res.json({ message: "Logged out" });
+// });
 
+router.post("/logout", (req, res) => {
+  res.clearCookie("token", {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+    path: "/", // make sure the path matches the cookie set during login
+  });
+  res.json({ message: "Logged out successfully" });
+});
 
 module.exports = router;
