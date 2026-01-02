@@ -55,7 +55,7 @@ router.post("/login", async (req, res) => {
     res.cookie("token", token, {
       httpOnly: true,
       secure: true, // true in production (https)
-      sameSite: "lax",
+      sameSite: "none",
       maxAge: 1 * 60 * 60 * 1000,
     })
 
