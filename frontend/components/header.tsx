@@ -68,19 +68,6 @@ export default function Header() {
     }, []);
 
 
-
-    // signout function 
-    // const handleSignOut = async () => {
-    //     await fetch(`${BASE_URL}/api/users/logout`, {
-    //         method: "POST",
-    //         credentials: "include",
-    //     });
-
-    //     setUser(null);
-    //     // window.dispatchEvent(new Event("auth-changed"));
-    //     window.location.reload();
-    // };
-
     const handleSignOut = async () => {
         try {
             await fetch(`${BASE_URL}/api/users/logout`, {
@@ -90,7 +77,7 @@ export default function Header() {
 
             setUser(null);
             window.dispatchEvent(new Event("auth-changed")); // optional but recommended
-            // window.location.reload(); // you can remove this if you handle state properly
+            window.location.reload(); 
         } catch (err) {
             console.error("Logout failed", err);
         }

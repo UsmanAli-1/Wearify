@@ -38,13 +38,23 @@ export default function UploadTryOnSection() {
     // check image upload 
     const handleImageCheck = async () => {
         if (!uploadedImage) {
-            toast.error("please Upload image first")
-            return
+            toast.error("Please upload image first");
+            return;
         }
 
-        const res = await fetch(`${BASE_URL}/api/users/use-points`, {
+        const fileInput = document.querySelector<HTMLInputElement>('input[type="file"]');
+        if (!fileInput?.files?.[0]) {
+            toast.error("File missing");
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append("image", fileInput.files[0]);
+
+        const res = await fetch(`${BASE_URL}/api/users/generate`, {
             method: "POST",
             credentials: "include",
+            body: formData, // image included
         });
 
         const data = await res.json();
@@ -54,10 +64,17 @@ export default function UploadTryOnSection() {
             return;
         }
 
-        window.dispatchEvent(new Event("auth-changed"));
+        // remove selected image after upload 
 
-        toast.success("Points deducted & generation started");
-    }
+        setUploadedImage(null);
+        const fileInputremove = document.getElementById("fileInput") as HTMLInputElement;
+        if (fileInputremove) fileInputremove.value = "";
+
+
+        window.dispatchEvent(new Event("auth-changed"));
+        toast.success("Image uploaded & points deducted");
+    };
+
 
     return (
         <section className="w-full px-6 md:px-20 py-8 flex flex-col gap-5 bg-gradient-to-r  from-[#4F5D3A] to-[#6B7A4C]">
@@ -107,8 +124,26 @@ export default function UploadTryOnSection() {
                     </Motion>
 
                     {/* Upload */}
-                    <Motion variant={popUp}>
-                        <Card className="bg-[#F5F5DC] rounded-3xl p-6 h-[285px] flex flex-col items-center justify-center text-center max-w-xl hover:scale-105 duration-300 transition shadow-xl">
+                    <Motion variant={popUp} >
+                        <Card className="relative bg-[#F5F5DC] rounded-3xl p-4 md:p-6 h-[285px] flex flex-col items-center justify-center text-center max-w-xl hover:scale-105 duration-300 transition shadow-xl">
+                            {isLoggedIn && (
+                                <div className=" relative w-full h-full flex justify-between">
+                                    <div className=" absolute z-10 w-17 h-25 md:w-18 md:h-20 lg:w-22 lg:h-30 left-0 top-0  ">
+                                        {uploadedImage ? (
+                                            <Image
+                                                src={uploadedImage}
+                                                alt=""
+                                                width={100}
+                                                height={100}
+                                                className="object-contain rounded-xl border shadow-xl "
+                                            />
+                                        ) :
+                                            <p className="border shadow-xl absolute z-10 w-17 h-25 md:w-18 md:h-20 lg:w-22 lg:h-30 left-0 top-0 rounded-xl text-gray-400/60 pt-9 text-xs md:text-sm ">selected image</p>
+                                        }
+                                    </div>
+                                    <div className=" border shadow-xl absolute z-10 w-17 h-25 md:w-18 md:h-20 lg:w-22 lg:h-30 right-0 top-0 rounded-xl text-gray-400/60 pt-9 text-xs md:text-sm">selected garment</div>
+                                </div>
+                            )}
                             <h3 className="font-semibold">Upload Your Photo</h3>
                             <p className="text-gray-500 text-xs">
                                 PNG, JPG, JPEG up to 10MB
@@ -142,19 +177,9 @@ export default function UploadTryOnSection() {
                 <Motion variant={popUp}>
                     <Card className="bg-[#F5F5DC] rounded-3xl p-6 h-[446px] flex items-center justify-center hover:scale-105 duration-300 transition shadow-xl">
                         <div className="w-full h-full border-2 border-dashed rounded-2xl flex items-center justify-center">
-                            {uploadedImage ? (
-                                <Image
-                                    src={uploadedImage}
-                                    alt=""
-                                    width={400}
-                                    height={400}
-                                    className="object-contain"
-                                />
-                            ) : (
-                                <p className="text-gray-500 text-sm text-center">
-                                    Upload image to preview
-                                </p>
-                            )}
+                            <p className="text-gray-500 text-sm text-center">
+                                Upload image to preview
+                            </p>
                         </div>
                     </Card>
                 </Motion>

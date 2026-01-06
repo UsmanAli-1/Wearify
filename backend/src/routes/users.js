@@ -4,6 +4,9 @@ const router = express.Router();
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const auth = require("../middleware/auth")
+const upload = require("../middleware/upload");
+const Image = require("../models/Image");
+
 
 router.post("/", async (req, res) => {
   // get data from frontend
@@ -95,26 +98,47 @@ router.get("/me", auth, async (req, res) => {
 });
 
 
-router.post("/use-points", auth, async (req, res) => {
-  const COST = 40;
+router.post("/generate", auth, upload.single("image"), async (req, res) => {
+  try {
+    const COST = 40;
 
-  const user = await User.findById(req.user.id);
+    if (!req.file) {
+      return res.status(400).json({ message: "No image uploaded" });
+    }
 
-  if (user.points < COST) {
-    return res.status(400).json({ message: "Not enough points" });
+    const user = await User.findById(req.user.id);
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    if (user.points < COST) {
+      return res.status(400).json({ message: "Not enough points" });
+    }
+
+    await Image.create({
+      user: user._id,
+      imagePath: req.file.filename,
+      pointsUsed: COST,
+    });
+    
+    // deduct points
+    user.points -= COST;
+    await user.save();
+
+    res.json({
+      message: "Image uploaded & points deducted",
+      points: user.points,
+      image: req.file.filename,
+    });
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
   }
+}
+);
 
-  user.points -= COST;   // 120 → 80
-  await user.save();     //  SAVED TO DATABASE
-
-  res.json({ points: user.points });
-});
-
-
-// router.post("/logout", (req, res) => {
-//   res.clearCookie("token");
-//   res.json({ message: "Logged out" });
-// });
 
 router.post("/logout", (req, res) => {
   res.clearCookie("token", {
