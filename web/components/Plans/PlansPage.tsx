@@ -55,7 +55,7 @@ export default function PlansPage() {
       toast.error("Payment canceled.");
       router.replace("/plans");
     }
-  }, [searchParams]);
+  }, [searchParams, router]);
 
   async function handleCheckout(plan: Plan): Promise<void> {
     setLoading(plan);
@@ -127,7 +127,9 @@ export default function PlansPage() {
               <Zap />
             </div>
             <h3 className="text-2xl font-semibold text-white">Pro</h3>
-            <p className="text-gray-300 text-sm mt-0.5">Best for regular users</p>
+            <p className="text-gray-300 text-sm mt-0.5">
+              Best for regular users
+            </p>
             <h2 className="text-4xl font-bold text-white my-5">Rs. 3,000</h2>
             <p className="text-gray-300 text-lg mt-0.5">" 1000 Points "</p>
             <ul className="text-sm text-gray-200 space-y-2 mt-4">
