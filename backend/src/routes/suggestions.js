@@ -7,15 +7,18 @@ const FormData = require("form-data");
 const mongoose = require("mongoose");
 const User = require("../models/User");
 
-const aiGarmentSchema = new mongoose.Schema({
-  filename: String,
-  gender: String,
-  color: String,
-  imagePath: String,
-}, { collection: "aigarments" });
+const aiGarmentSchema = new mongoose.Schema(
+  {
+    filename: String,
+    gender: String,
+    color: String,
+    imagePath: String,
+  },
+  { collection: "aigarments" },
+);
 
-const AIGarment = mongoose.models.AIGarment ||
-  mongoose.model("AIGarment", aiGarmentSchema);
+const AIGarment =
+  mongoose.models.AIGarment || mongoose.model("AIGarment", aiGarmentSchema);
 
 router.post("/suggest", auth, upload.single("image"), async (req, res) => {
   try {
@@ -37,32 +40,32 @@ router.post("/suggest", auth, upload.single("image"), async (req, res) => {
     }
 
     // ── Step 2: Validate full body ──
-    const validationForm = new FormData();
-    validationForm.append("file", req.file.buffer, {
-      filename: "image.jpg",
-      contentType: req.file.mimetype,
-    });
+    // const validationForm = new FormData();
+    // validationForm.append("file", req.file.buffer, {
+    //   filename: "image.jpg",
+    //   contentType: req.file.mimetype,
+    // });
 
-    let validationResult;
-    try {
-      const validationRes = await axios.post(
-        `${process.env.AI_VALIDATION_URL}/check-full-body`,
-        validationForm,
-        { headers: validationForm.getHeaders(), timeout: 30000 }
-      );
-      validationResult = validationRes.data;
-      console.log("✅ Validation result:", validationResult);
-    } catch (err) {
-      console.warn("⚠️ Validation service unavailable — skipping");
-      validationResult = { isFullBody: true };
-    }
+    // let validationResult;
+    // try {
+    //   const validationRes = await axios.post(
+    //     `${process.env.AI_VALIDATION_URL}/check-full-body`,
+    //     validationForm,
+    //     { headers: validationForm.getHeaders(), timeout: 30000 }
+    //   );
+    //   validationResult = validationRes.data;
+    //   console.log("✅ Validation result:", validationResult);
+    // } catch (err) {
+    //   console.warn("⚠️ Validation service unavailable — skipping");
+    //   validationResult = { isFullBody: true };
+    // }
 
-    if (!validationResult.isFullBody) {
-      return res.status(400).json({
-        message: "Please upload a clear full-body photo",
-        reason: validationResult.reason,
-      });
-    }
+    // if (!validationResult.isFullBody) {
+    //   return res.status(400).json({
+    //     message: "Please upload a clear full-body photo",
+    //     reason: validationResult.reason,
+    //   });
+    // }
 
     // ── Step 3: Get skin tone ──
     const skinForm = new FormData();
@@ -72,7 +75,10 @@ router.post("/suggest", auth, upload.single("image"), async (req, res) => {
     });
     skinForm.append("gender", gender);
 
-    console.log("🎨 Calling suggestion model at:", process.env.SUGGESTION_MODEL_URL);
+    console.log(
+      "🎨 Calling suggestion model at:",
+      process.env.SUGGESTION_MODEL_URL,
+    );
 
     let skinTone;
     let suggestedColors;
@@ -81,8 +87,18 @@ router.post("/suggest", auth, upload.single("image"), async (req, res) => {
       const skinRes = await axios.post(
         `${process.env.SUGGESTION_MODEL_URL}/suggest-outfits`,
         skinForm,
-        { headers: skinForm.getHeaders(), timeout: 60000 }
+        { headers: skinForm.getHeaders(), timeout: 60000 },
       );
+
+      if (skinRes.data.success === false) {
+        return res.status(400).json({
+          message:
+            skinRes.data.message ||
+            "Image rejected. Please upload a clear photo.",
+          reason: skinRes.data.reason,
+        });
+      }
+
       skinTone = skinRes.data.skin_tone;
       suggestedColors = skinRes.data.suggested_colors;
       console.log("✅ Skin tone detected:", skinTone);
@@ -95,7 +111,12 @@ router.post("/suggest", auth, upload.single("image"), async (req, res) => {
     }
 
     // ── Step 4: Query MongoDB ──
-    console.log("🔍 Querying aigarments — gender:", gender, "colors:", suggestedColors);
+    console.log(
+      "🔍 Querying aigarments — gender:",
+      gender,
+      "colors:",
+      suggestedColors,
+    );
 
     const garments = await AIGarment.aggregate([
       { $match: { gender, color: { $in: suggestedColors } } },
@@ -103,7 +124,7 @@ router.post("/suggest", auth, upload.single("image"), async (req, res) => {
     ]);
 
     console.log(`👗 Found ${garments.length} garments`);
-    garments.forEach(g => console.log(`   → ${g.filename} (${g.color})`));
+    garments.forEach((g) => console.log(`   → ${g.filename} (${g.color})`));
 
     // ── Step 5: Deduct points ──
     user.points -= COST;
@@ -122,7 +143,6 @@ router.post("/suggest", auth, upload.single("image"), async (req, res) => {
       points: user.points,
       pointsExhausted: user.points < COST,
     });
-
   } catch (err) {
     console.error("🔥 Suggestion error:", err);
     res.status(500).json({ message: "Server error" });
