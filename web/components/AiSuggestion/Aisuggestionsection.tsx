@@ -173,7 +173,7 @@ export default function AiSuggestionSection() {
         </>
       ) : (
         <>
-          <FontAwesomeIcon icon={faWandMagicSparkles}  />
+          <FontAwesomeIcon icon={faWandMagicSparkles} />
           Suggest Me
         </>
       )}
@@ -200,8 +200,7 @@ export default function AiSuggestionSection() {
                 <div
                   onDrop={handleDrop}
                   onDragOver={(e) => e.preventDefault()}
-                  style={{ minHeight: "65svh" }}
-                  className="relative flex-1 rounded-2xl border-2 border-dashed border-white/10 overflow-hidden flex flex-col items-center justify-center transition hover:border-purple-400/30 duration-300 sm:min-h-0"
+                  className="relative flex-1 rounded-2xl border-2 border-dashed border-white/10 overflow-hidden flex flex-col items-center justify-center transition hover:border-purple-400/30 duration-300 min-h-[65svh] sm:min-h-[55svh]"
                 >
                   {uploadedImage ? (
                     <>
