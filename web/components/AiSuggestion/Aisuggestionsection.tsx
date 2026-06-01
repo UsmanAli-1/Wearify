@@ -30,6 +30,7 @@ export default function AiSuggestionSection() {
   const [gender, setGender] = useState<"male" | "female">("male");
   const [loading, setLoading] = useState(false);
   const [suggestions, setSuggestions] = useState<SuggestedGarment[]>([]);
+  const [showRemoveConfirm, setShowRemoveConfirm] = useState(false);
 
   useEffect(() => {
     const checkLogin = () => {
@@ -211,11 +212,7 @@ export default function AiSuggestionSection() {
                       />
                       {!loading && (
                         <button
-                          onClick={() => {
-                            setUploadedImage(null);
-                            setSelectedFile(null);
-                            setSuggestions([]);
-                          }}
+                          onClick={() => setShowRemoveConfirm(true)}
                           className="absolute top-2 right-2 z-10 w-7 h-7 rounded-full bg-black/60 hover:bg-red-500 flex items-center justify-center transition duration-200 cursor-pointer"
                         >
                           <X className="w-4 h-4 text-white" />
@@ -372,6 +369,53 @@ export default function AiSuggestionSection() {
           {SuggestButton}
         </div>
       </div>
+      {/* Remove image confirmation */}
+      {showRemoveConfirm && (
+        <div
+          className="fixed inset-0 z-[200] flex items-center justify-center p-4"
+          style={{
+            backgroundColor: "rgba(10,10,20,0.6)",
+            backdropFilter: "blur(6px)",
+            WebkitBackdropFilter: "blur(6px)",
+          }}
+        >
+          <div
+            className="mx-4 w-full max-w-sm rounded-2xl p-6 flex flex-col gap-4"
+            style={{
+              background: "rgba(105, 106, 199, 0.27)",
+              backdropFilter: "blur(20px)",
+              border: "1px solid rgba(255,255,255,0.12)",
+              boxShadow: "0 20px 60px rgba(0,0,0,0.5)",
+            }}
+          >
+            <div className="flex flex-col gap-1">
+              <h3 className="text-white font-semibold text-base">Remove Photo?</h3>
+              <p className="text-white/40 text-sm">
+                Suggested garments will also be removed. This data is not stored.
+              </p>
+            </div>
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={() => setShowRemoveConfirm(false)}
+                className="px-4 py-2 rounded-full text-sm text-white/60 hover:text-white bg-white/10 hover:bg-white/15 transition duration-200 cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  setUploadedImage(null);
+                  setSelectedFile(null);
+                  setSuggestions([]);
+                  setShowRemoveConfirm(false);
+                }}
+                className="px-4 py-2 rounded-full text-sm text-white bg-red-500/80 hover:bg-red-500 transition duration-200 cursor-pointer"
+              >
+                Yes, Remove
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </section>
   );
 }
