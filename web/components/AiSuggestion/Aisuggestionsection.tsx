@@ -130,7 +130,7 @@ export default function AiSuggestionSection() {
       localStorage.setItem("prefill_garment_image", garment.imagePath);
       localStorage.setItem("prefill_garment_name", garment.name);
       localStorage.setItem("prefill_is_ai_garment", "true"); // ← add this
-      router.push("/");
+      router.push("/ai-suggestion");
     };
     reader.readAsDataURL(selectedFile);
   };

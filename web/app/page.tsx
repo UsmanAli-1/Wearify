@@ -1,9 +1,9 @@
-import VirtualTryOnSection from "@/components/TryOn/VirtualTryOnSection";
+import AiSuggestionSection from "@/components/AiSuggestion/Aisuggestionsection";
 
 export default function Home() {
   return (
     <div>
-        <VirtualTryOnSection />
+      <AiSuggestionSection />
     </div>
   );
 }
