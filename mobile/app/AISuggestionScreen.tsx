@@ -6,10 +6,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
-  ActivityIndicator,
-  Alert,
   Dimensions,
-  FlatList,
   Image,
   SafeAreaView,
   ScrollView,
@@ -18,6 +15,17 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import Animated, {
+  FadeIn,
+  FadeInDown,
+  FadeInUp,
+  useAnimatedStyle,
+  useSharedValue,
+  withRepeat,
+  withSequence,
+  withTiming,
+} from "react-native-reanimated";
+import { useGlassAlert } from "@/components/GlassAlert";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -41,32 +49,60 @@ async function getAuthToken(): Promise<string> {
   return token ?? "";
 }
 
+// ─── Shimmer skeleton card (#13) ───────────────────────────────────────────────
+
+function SkeletonCard({ delay = 0 }: { delay?: number }) {
+  const opacity = useSharedValue(0.3);
+
+  React.useEffect(() => {
+    opacity.value = withRepeat(
+      withSequence(
+        withTiming(0.7, { duration: 700 }),
+        withTiming(0.3, { duration: 700 }),
+      ),
+      -1,
+      false,
+    );
+    // Reanimated shared value is a stable ref — safe to omit from deps.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const animatedStyle = useAnimatedStyle(() => ({ opacity: opacity.value }));
+
+  return (
+    <Animated.View
+      entering={FadeIn.delay(delay).duration(300)}
+      style={styles.skeletonCard}
+    >
+      <Animated.View style={[styles.skeletonShimmer, animatedStyle]} />
+      <Text style={styles.skeletonText}>Finding...</Text>
+    </Animated.View>
+  );
+}
+
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export default function AISuggestionScreen() {
   const router = useRouter();
+  const { show: showAlert, element: alertElement } = useGlassAlert();
 
   const [step, setStep] = useState<Step>("upload");
   const [gender, setGender] = useState<Gender>("male");
   const [personImage, setPersonImage] = useState<string | null>(null);
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
-  const [skinTone, setSkinTone] = useState<string>("");
-  const [suggestedColors, setSuggestedColors] = useState<string[]>([]);
-  const [loadingMessage, setLoadingMessage] = useState("");
 
   // ── Image picker ────────────────────────────────────────────────────────────
 
   const handlePickImage = async () => {
     const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!permission.granted) {
-      Alert.alert("Permission Required", "We need access to your photos!");
+      showAlert("Permission Required", "We need access to your photos!");
       return;
     }
 
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      aspect: [3, 4],
+      allowsEditing: false,
       quality: 0.8,
     });
 
@@ -85,7 +121,7 @@ export default function AISuggestionScreen() {
 
   const handleSuggest = async () => {
     if (!personImage) {
-      Alert.alert("No Image", "Please select a photo first.");
+      showAlert("No Image", "Please select a photo first.");
       return;
     }
 
@@ -94,7 +130,6 @@ export default function AISuggestionScreen() {
     try {
       const token = await getAuthToken();
 
-      // Build multipart form
       const formData = new FormData();
       formData.append("image", {
         uri: personImage,
@@ -102,13 +137,6 @@ export default function AISuggestionScreen() {
         type: "image/jpeg",
       } as any);
       formData.append("gender", gender);
-
-      // Step messages so the user knows what's happening
-      setLoadingMessage("Validating full body image...");
-      await new Promise((r) => setTimeout(r, 800));
-      setLoadingMessage("Analyzing skin tone...");
-      await new Promise((r) => setTimeout(r, 600));
-      setLoadingMessage("Finding matching outfits...");
 
       const { data } = await axios.post(
         `${API_URL}/suggestions/suggest`,
@@ -119,37 +147,35 @@ export default function AISuggestionScreen() {
             "Content-Type": "multipart/form-data",
           },
           timeout: 90000,
-        }
+        },
       );
 
-      setSkinTone(data.skin_tone ?? "");
-      setSuggestedColors(data.suggested_colors ?? []);
       setSuggestions(data.suggestions ?? []);
       setStep("results");
     } catch (err: any) {
       setStep("upload");
 
-      // Handle specific backend error messages
       const msg =
-        err?.response?.data?.message ?? "Something went wrong. Please try again.";
+        err?.response?.data?.message ??
+        "Something went wrong. Please try again.";
 
       if (msg.includes("full-body") || msg.includes("full body")) {
-        Alert.alert(
+        showAlert(
           "Full Body Required 📸",
           "Please upload a clear head-to-toe photo so we can analyze your skin tone accurately.\n\nTips:\n• Stand in good lighting\n• Make sure your full body is visible\n• Avoid cropped or close-up shots",
-          [{ text: "Try Again", style: "default" }]
+          [{ text: "Try Again" }],
         );
       } else if (msg.includes("points") || msg.includes("Points")) {
-        Alert.alert(
+        showAlert(
           "Not Enough Diamonds 💎",
           "You need 40 diamonds to use AI Suggestions. Top up from your dashboard.",
           [
             { text: "Cancel", style: "cancel" },
             { text: "Top Up", onPress: () => router.back() },
-          ]
+          ],
         );
       } else {
-        Alert.alert("Error", msg);
+        showAlert("Error", msg);
       }
     }
   };
@@ -158,55 +184,77 @@ export default function AISuggestionScreen() {
     setStep("upload");
     setPersonImage(null);
     setSuggestions([]);
-    setSkinTone("");
-    setSuggestedColors([]);
+  };
+
+  // ── Tap a suggestion → go to dashboard try-on with this garment + photo (#12) ──
+
+  const handleSelectSuggestion = (item: Suggestion) => {
+    router.push({
+      pathname: "/dashboard",
+      params: {
+        garmentId: item._id,
+        garmentName: item.name,
+        garmentImagePath: item.imagePath,
+        personImage: personImage ?? "",
+      },
+    } as any);
   };
 
   // ── Render helpers ───────────────────────────────────────────────────────────
 
   const renderUploadStep = () => (
-    <ScrollView showsVerticalScrollIndicator={false}>
-      {/* Person image area */}
-      <TouchableOpacity
-        style={styles.uploadBox}
-        onPress={handlePickImage}
-        activeOpacity={personImage ? 1 : 0.7}
+    <ScrollView
+      showsVerticalScrollIndicator={false}
+      contentContainerStyle={{ flexGrow: 1 }}
+    >
+      {/* Person image area — increased size (#10) */}
+      <Animated.View
+        entering={FadeIn.duration(350)}
+        style={styles.uploadBoxWrapper}
       >
-        {personImage ? (
-          <View style={{ flex: 1, width: "100%" }}>
-            <Image source={{ uri: personImage }} style={styles.personPreview} />
-            <TouchableOpacity style={styles.removeBtn} onPress={handleRemoveImage}>
-              <Text style={styles.removeBtnText}>✕</Text>
-            </TouchableOpacity>
-          </View>
-        ) : (
-          <View style={styles.uploadPlaceholder}>
-            <Text style={styles.uploadIcon}>📸</Text>
-            <Text style={styles.uploadTitle}>Upload Your Photo</Text>
-            <Text style={styles.uploadSubtitle}>
-              Head-to-toe full body photo required
-            </Text>
-            <View style={styles.uploadHint}>
-              <Text style={styles.uploadHintText}>Tap to select from gallery</Text>
+        <TouchableOpacity
+          style={styles.uploadBox}
+          onPress={handlePickImage}
+          activeOpacity={personImage ? 1 : 0.7}
+        >
+          {personImage ? (
+            <View style={{ flex: 1, width: "100%" }}>
+              <Image
+                source={{ uri: personImage }}
+                style={styles.personPreview}
+              />
+              <TouchableOpacity
+                style={styles.removeBtn}
+                onPress={handleRemoveImage}
+              >
+                <Text style={styles.removeBtnText}>✕</Text>
+              </TouchableOpacity>
             </View>
-          </View>
-        )}
-      </TouchableOpacity>
-
-      {/* Full body reminder */}
-      <View style={styles.reminderBox}>
-        <Text style={styles.reminderIcon}>💡</Text>
-        <Text style={styles.reminderText}>
-          For best results, use a clear full-body photo in good lighting
-        </Text>
-      </View>
+          ) : (
+            <View style={styles.uploadPlaceholder}>
+              <Text style={styles.uploadTitle}>Upload Image</Text>
+              <View style={styles.uploadHint}>
+                <Text style={styles.uploadHintText}>
+                  Tap to select from gallery
+                </Text>
+              </View>
+            </View>
+          )}
+        </TouchableOpacity>
+      </Animated.View>
 
       {/* Gender selector */}
-      <View style={styles.genderContainer}>
+      <Animated.View
+        entering={FadeInUp.delay(100).duration(350)}
+        style={styles.genderContainer}
+      >
         <Text style={styles.sectionLabel}>Select Gender</Text>
         <View style={styles.genderRow}>
           <TouchableOpacity
-            style={[styles.genderBtn, gender === "male" && styles.genderBtnActive]}
+            style={[
+              styles.genderBtn,
+              gender === "male" && styles.genderBtnActive,
+            ]}
             onPress={() => setGender("male")}
           >
             <Text style={styles.genderIcon}>♂</Text>
@@ -238,109 +286,101 @@ export default function AISuggestionScreen() {
             </Text>
           </TouchableOpacity>
         </View>
-      </View>
+      </Animated.View>
 
-      {/* Suggest button */}
-      <TouchableOpacity
-        style={[styles.suggestBtn, !personImage && styles.suggestBtnDisabled]}
-        onPress={handleSuggest}
-        disabled={!personImage}
-      >
-        <LinearGradient
-          colors={personImage ? ["#8b5cf6", "#3b82f6"] : ["#1f2937", "#1f2937"]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 0 }}
-          style={styles.suggestBtnGradient}
+      {/* Suggest button — no extra space below (#10) */}
+      <Animated.View entering={FadeInUp.delay(150).duration(350)}>
+        <TouchableOpacity
+          style={[styles.suggestBtn, !personImage && styles.suggestBtnDisabled]}
+          onPress={handleSuggest}
+          disabled={!personImage}
         >
-          <Text style={styles.suggestBtnText}>✨ Suggest Me (40 💎)</Text>
-        </LinearGradient>
-      </TouchableOpacity>
+          <LinearGradient
+            colors={
+              personImage ? ["#8b5cf6", "#3b82f6"] : ["#1f2937", "#1f2937"]
+            }
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+            style={styles.suggestBtnGradient}
+          >
+            <Text style={styles.suggestBtnText}>✨ Suggest Me (40 💎)</Text>
+          </LinearGradient>
+        </TouchableOpacity>
+      </Animated.View>
     </ScrollView>
   );
 
+  // ── Loading step — skeleton grid instead of "Analyzing..." card (#13) ──────────
+
   const renderLoadingStep = () => (
-    <View style={styles.loadingContainer}>
-      <View style={styles.loadingCard}>
-        <ActivityIndicator size="large" color="#8b5cf6" />
-        <Text style={styles.loadingTitle}>Analyzing your photo...</Text>
-        <Text style={styles.loadingMessage}>{loadingMessage}</Text>
-
-        {/* Progress steps */}
-        <View style={styles.progressSteps}>
-          {[
-            "Validating full body",
-            "Detecting skin tone",
-            "Matching outfits",
-          ].map((s, i) => (
-            <View key={i} style={styles.progressStep}>
-              <View
-                style={[
-                  styles.progressDot,
-                  loadingMessage.toLowerCase().includes(
-                    s.split(" ")[0].toLowerCase()
-                  ) && styles.progressDotActive,
-                ]}
-              />
-              <Text style={styles.progressStepText}>{s}</Text>
+    <Animated.View entering={FadeIn.duration(250)} style={{ flex: 1 }}>
+      {personImage && (
+        <View style={styles.loadingPersonRow}>
+          <View style={styles.loadingPersonCard}>
+            <Image
+              source={{ uri: personImage }}
+              style={styles.loadingPersonImage}
+            />
+            <View style={styles.loadingPersonOverlay}>
+              <Text style={styles.loadingPersonOverlayIcon}>⬆</Text>
             </View>
-          ))}
-        </View>
-      </View>
-    </View>
-  );
-
-  const renderResultsStep = () => (
-    <ScrollView showsVerticalScrollIndicator={false}>
-      {/* Skin tone result */}
-      <View style={styles.resultHeader}>
-        <View style={styles.skinToneCard}>
-          <Text style={styles.skinToneLabel}>Skin Tone Detected</Text>
-          <Text style={styles.skinToneValue}>
-            {skinTone
-              ? skinTone.charAt(0).toUpperCase() + skinTone.slice(1)
-              : "Analyzed"}
-          </Text>
-        </View>
-
-        <View style={styles.colorsCard}>
-          <Text style={styles.colorsLabel}>Recommended Colors</Text>
-          <View style={styles.colorChips}>
-            {suggestedColors.map((color, i) => (
-              <View key={i} style={styles.colorChip}>
-                <Text style={styles.colorChipText}>{color}</Text>
-              </View>
+          </View>
+          <View style={styles.skeletonGrid}>
+            {[0, 1, 2, 3].map((i) => (
+              <SkeletonCard key={i} delay={i * 100} />
             ))}
           </View>
         </View>
-      </View>
+      )}
 
-      {/* Suggestions grid */}
-      <Text style={styles.suggestionsTitle}>
+      <View style={styles.analyzingBar}>
+        <Text style={styles.analyzingText}>✨ Analyzing...</Text>
+      </View>
+    </Animated.View>
+  );
+
+  // ── Results step — just outfit grid (#12) ──────────────────────────────────────
+
+  const renderResultsStep = () => (
+    <ScrollView showsVerticalScrollIndicator={false}>
+      <Animated.Text
+        entering={FadeIn.duration(300)}
+        style={styles.suggestionsTitle}
+      >
         {suggestions.length > 0
           ? `${suggestions.length} Outfits Matched For You`
           : "No outfits found for your profile"}
-      </Text>
+      </Animated.Text>
 
       {suggestions.length > 0 ? (
         <View style={styles.grid}>
-          {suggestions.map((item) => (
-            <View key={item._id} style={styles.garmentCard}>
-              <Image
-                source={{
-                  uri: item.imagePath.startsWith("http")
-                    ? item.imagePath
-                    : `${API_URL.replace("/api", "")}/${item.imagePath.replace(
-                        /\\/g,
-                        "/"
-                      )}`,
-                }}
-                style={styles.garmentImage}
-                resizeMode="cover"
-              />
-              <View style={styles.garmentInfo}>
-                <Text style={styles.garmentColor}>{item.color}</Text>
-              </View>
-            </View>
+          {suggestions.map((item, i) => (
+            <Animated.View
+              key={item._id}
+              entering={FadeInUp.delay(i * 60).duration(300)}
+            >
+              <TouchableOpacity
+                style={styles.garmentCard}
+                onPress={() => handleSelectSuggestion(item)}
+                activeOpacity={0.85}
+              >
+                <Image
+                  source={{
+                    uri: item.imagePath.startsWith("http")
+                      ? item.imagePath
+                      : `${API_URL.replace("/api", "")}/${item.imagePath.replace(
+                          /\\/g,
+                          "/",
+                        )}`,
+                  }}
+                  style={styles.garmentImage}
+                  resizeMode="cover"
+                />
+                <View style={styles.garmentInfo}>
+                  <Text style={styles.garmentColor}>{item.color}</Text>
+                </View>
+              </TouchableOpacity>
+            </Animated.View>
           ))}
         </View>
       ) : (
@@ -352,7 +392,6 @@ export default function AISuggestionScreen() {
         </View>
       )}
 
-      {/* Try again */}
       <TouchableOpacity style={styles.tryAgainBtn} onPress={handleReset}>
         <Text style={styles.tryAgainText}>🔄 Try Another Photo</Text>
       </TouchableOpacity>
@@ -369,14 +408,18 @@ export default function AISuggestionScreen() {
       style={styles.background}
     >
       <SafeAreaView style={styles.container}>
-        {/* Header */}
-        <View style={styles.header}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
+        {/* Header — heading removed (#10), just back button */}
+        <Animated.View
+          entering={FadeInDown.duration(300)}
+          style={styles.header}
+        >
+          <TouchableOpacity
+            onPress={() => router.back()}
+            style={styles.backBtn}
+          >
             <Text style={styles.backBtnText}>← Back</Text>
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>AI Outfit Suggestion</Text>
-          <View style={{ width: 60 }} />
-        </View>
+        </Animated.View>
 
         <View style={styles.content}>
           {step === "upload" && renderUploadStep()}
@@ -384,6 +427,8 @@ export default function AISuggestionScreen() {
           {step === "results" && renderResultsStep()}
         </View>
       </SafeAreaView>
+
+      {alertElement}
     </LinearGradient>
   );
 }
@@ -398,10 +443,9 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
     paddingHorizontal: 20,
     paddingVertical: 12,
-    marginBottom: 8,
+    marginBottom: 4,
     marginTop: 50,
   },
   backBtn: {
@@ -413,24 +457,18 @@ const styles = StyleSheet.create({
     borderColor: "rgba(139, 92, 246, 0.3)",
   },
   backBtnText: { color: "#8b5cf6", fontWeight: "600", fontSize: 14 },
-  headerTitle: {
-    color: "#FFFFFF",
-    fontSize: 18,
-    fontWeight: "bold",
-    textAlign: "center",
-  },
 
-  // Upload step
+  // Upload step — bigger image (#10)
+  uploadBoxWrapper: { flex: 1, marginBottom: 16, minHeight: 420 },
   uploadBox: {
+    flex: 1,
     width: "100%",
-    height: 320,
     backgroundColor: "rgba(255,255,255,0.03)",
     borderRadius: 20,
     borderWidth: 2,
     borderColor: "rgba(255,255,255,0.1)",
     borderStyle: "dashed",
     overflow: "hidden",
-    marginBottom: 16,
   },
   uploadPlaceholder: {
     flex: 1,
@@ -438,14 +476,12 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     padding: 24,
   },
-  uploadIcon: { fontSize: 48, marginBottom: 16 },
   uploadTitle: {
     color: "#E2E8F0",
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: "700",
-    marginBottom: 8,
+    marginBottom: 16,
   },
-  uploadSubtitle: { color: "#64748b", fontSize: 13, textAlign: "center", marginBottom: 16 },
   uploadHint: {
     backgroundColor: "rgba(139, 92, 246, 0.15)",
     paddingHorizontal: 16,
@@ -469,20 +505,6 @@ const styles = StyleSheet.create({
   },
   removeBtnText: { color: "#FFF", fontSize: 14, fontWeight: "bold" },
 
-  reminderBox: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "rgba(139, 92, 246, 0.08)",
-    borderRadius: 12,
-    padding: 12,
-    marginBottom: 20,
-    borderWidth: 1,
-    borderColor: "rgba(139, 92, 246, 0.2)",
-    gap: 10,
-  },
-  reminderIcon: { fontSize: 18 },
-  reminderText: { color: "#A0AEC0", fontSize: 13, flex: 1, lineHeight: 18 },
-
   sectionLabel: {
     color: "#A0AEC0",
     fontSize: 13,
@@ -491,7 +513,7 @@ const styles = StyleSheet.create({
     textTransform: "uppercase",
     letterSpacing: 1,
   },
-  genderContainer: { marginBottom: 24 },
+  genderContainer: { marginBottom: 16 },
   genderRow: { flexDirection: "row", gap: 12 },
   genderBtn: {
     flex: 1,
@@ -513,7 +535,7 @@ const styles = StyleSheet.create({
   genderText: { color: "#A0AEC0", fontSize: 15, fontWeight: "600" },
   genderTextActive: { color: "#FFFFFF" },
 
-  suggestBtn: { borderRadius: 16, overflow: "hidden", marginBottom: 20 },
+  suggestBtn: { borderRadius: 50, overflow: "hidden" },
   suggestBtnDisabled: { opacity: 0.5 },
   suggestBtnGradient: {
     paddingVertical: 16,
@@ -522,73 +544,73 @@ const styles = StyleSheet.create({
   },
   suggestBtnText: { color: "#FFFFFF", fontSize: 17, fontWeight: "bold" },
 
-  // Loading step
-  loadingContainer: { flex: 1, alignItems: "center", justifyContent: "center" },
-  loadingCard: {
-    backgroundColor: "rgba(255,255,255,0.04)",
-    borderRadius: 24,
-    padding: 32,
+  // Loading step — skeleton grid (#13)
+  loadingPersonRow: { gap: 12 },
+  loadingPersonCard: {
     width: "100%",
-    alignItems: "center",
+    height: 220,
+    borderRadius: 16,
+    overflow: "hidden",
+    backgroundColor: "rgba(255,255,255,0.03)",
     borderWidth: 1,
     borderColor: "rgba(255,255,255,0.08)",
   },
-  loadingTitle: {
-    color: "#FFFFFF",
-    fontSize: 20,
-    fontWeight: "bold",
-    marginTop: 20,
-    marginBottom: 8,
-  },
-  loadingMessage: { color: "#8b5cf6", fontSize: 14, marginBottom: 32 },
-  progressSteps: { width: "100%", gap: 16 },
-  progressStep: { flexDirection: "row", alignItems: "center", gap: 12 },
-  progressDot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    backgroundColor: "rgba(255,255,255,0.15)",
-  },
-  progressDotActive: { backgroundColor: "#8b5cf6" },
-  progressStepText: { color: "#A0AEC0", fontSize: 14 },
-
-  // Results step
-  resultHeader: { flexDirection: "row", gap: 12, marginBottom: 20 },
-  skinToneCard: {
-    flex: 1,
-    backgroundColor: "rgba(139, 92, 246, 0.1)",
+  loadingPersonImage: { width: "100%", height: "100%", resizeMode: "cover" },
+  loadingPersonOverlay: {
+    position: "absolute",
+    top: 10,
+    left: 10,
+    width: 32,
+    height: 32,
     borderRadius: 16,
-    padding: 16,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  loadingPersonOverlayIcon: { color: "#FFFFFF", fontSize: 14 },
+
+  skeletonGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 12,
+  },
+  skeletonCard: {
+    width: CARD_SIZE,
+    height: CARD_SIZE * 1.3,
+    borderRadius: 16,
+    backgroundColor: "rgba(255,255,255,0.03)",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.08)",
+    alignItems: "center",
+    justifyContent: "center",
+    overflow: "hidden",
+  },
+  skeletonShimmer: {
+    position: "absolute",
+    width: "100%",
+    height: "100%",
+    backgroundColor: "rgba(139, 92, 246, 0.15)",
+  },
+  skeletonText: { color: "#64748b", fontSize: 12, fontWeight: "600" },
+
+  analyzingBar: {
+    marginTop: 16,
+    backgroundColor: "rgba(139, 92, 246, 0.15)",
+    borderRadius: 50,
+    paddingVertical: 14,
+    alignItems: "center",
     borderWidth: 1,
     borderColor: "rgba(139, 92, 246, 0.3)",
   },
-  skinToneLabel: { color: "#A0AEC0", fontSize: 11, marginBottom: 6, fontWeight: "600" },
-  skinToneValue: { color: "#FFFFFF", fontSize: 16, fontWeight: "bold" },
-  colorsCard: {
-    flex: 2,
-    backgroundColor: "rgba(255,255,255,0.04)",
-    borderRadius: 16,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.08)",
-  },
-  colorsLabel: { color: "#A0AEC0", fontSize: 11, marginBottom: 8, fontWeight: "600" },
-  colorChips: { flexDirection: "row", flexWrap: "wrap", gap: 6 },
-  colorChip: {
-    backgroundColor: "rgba(139, 92, 246, 0.2)",
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: "rgba(139, 92, 246, 0.4)",
-  },
-  colorChipText: { color: "#d8b4fe", fontSize: 11, fontWeight: "600" },
+  analyzingText: { color: "#8b5cf6", fontWeight: "700", fontSize: 14 },
 
+  // Results step
   suggestionsTitle: {
     color: "#FFFFFF",
     fontSize: 16,
     fontWeight: "bold",
     marginBottom: 16,
+    marginTop: 8,
   },
   grid: {
     flexDirection: "row",
@@ -606,7 +628,12 @@ const styles = StyleSheet.create({
   },
   garmentImage: { width: "100%", height: CARD_SIZE * 1.3 },
   garmentInfo: { padding: 10 },
-  garmentColor: { color: "#A0AEC0", fontSize: 12, fontWeight: "600", textTransform: "capitalize" },
+  garmentColor: {
+    color: "#A0AEC0",
+    fontSize: 12,
+    fontWeight: "600",
+    textTransform: "capitalize",
+  },
 
   emptyResults: { alignItems: "center", padding: 40 },
   emptyResultsIcon: { fontSize: 48, marginBottom: 16 },

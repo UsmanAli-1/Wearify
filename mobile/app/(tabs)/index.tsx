@@ -1,8 +1,10 @@
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
-import 'react-native-reanimated';
-import React from "react";
+import "react-native-reanimated";
+import React, { useEffect, useState } from "react";
 import {
+  ActivityIndicator,
   Image,
   SafeAreaView,
   StyleSheet,
@@ -14,6 +16,57 @@ import Starfield from "../../components/Starfield"; // (Adjust the path if you p
 
 export default function WelcomeScreen() {
   const router = useRouter();
+  const [checking, setChecking] = useState(true);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const [hasSeenOnboarding, authToken] = await Promise.all([
+          AsyncStorage.getItem("hasSeenOnboarding"),
+          AsyncStorage.getItem("authToken"),
+        ]);
+
+        if (hasSeenOnboarding === "true") {
+          // Returning user — skip the welcome screen entirely.
+          if (authToken) {
+            router.replace("/dashboard");
+          } else {
+            router.replace("/auth");
+          }
+          return;
+        }
+      } catch {
+        // If AsyncStorage fails for any reason, fall back to showing
+        // the welcome screen as before.
+      } finally {
+        setChecking(false);
+      }
+    })();
+  }, [router]);
+
+  const handleGetStarted = async () => {
+    try {
+      await AsyncStorage.setItem("hasSeenOnboarding", "true");
+    } catch {
+      // Non-fatal — worst case the welcome screen shows again next time.
+    }
+    router.push("/auth");
+  };
+
+  if (checking) {
+    return (
+      <LinearGradient
+        colors={["#1c103f", "#080d1a", "#080d1a", "#2d1445"]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={styles.backgroundGradient}
+      >
+        <SafeAreaView style={[styles.container, styles.loadingContainer]}>
+          <ActivityIndicator size="large" color="#8b5cf6" />
+        </SafeAreaView>
+      </LinearGradient>
+    );
+  }
 
   return (
     <LinearGradient
@@ -36,7 +89,7 @@ export default function WelcomeScreen() {
 
         <TouchableOpacity
           style={styles.buttonContainer}
-          onPress={() => router.push("/auth")}
+          onPress={handleGetStarted}
         >
           {/* 2. Restored the visual button inside the TouchableOpacity */}
           <LinearGradient
@@ -62,6 +115,10 @@ const styles = StyleSheet.create({
     backgroundColor: "transparent", // 3. Made transparent to reveal the gradient
     justifyContent: "space-between",
     padding: 24,
+  },
+  loadingContainer: {
+    justifyContent: "center",
+    alignItems: "center",
   },
   content: {
     flex: 1,

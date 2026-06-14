@@ -6,7 +6,6 @@ import { useRouter } from "expo-router";
 import React, { useCallback, useState } from "react";
 import {
   ActivityIndicator,
-  Alert,
   Dimensions,
   FlatList,
   Image,
@@ -18,12 +17,13 @@ import {
   View,
 } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
+import { useGlassAlert } from "@/components/GlassAlert";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 interface TryOnRecord {
   _id: string;
-  imagePath: string;           // generated result image (Cloudinary)
+  imagePath: string; // generated result image (Cloudinary)
   createdAt: string;
   garment?: {
     _id: string | null;
@@ -54,10 +54,13 @@ function formatDate(iso: string): string {
 
 export default function TryOnHistoryScreen() {
   const router = useRouter();
+  const { show: showAlert, element: alertElement } = useGlassAlert();
 
   const [records, setRecords] = useState<TryOnRecord[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [selectedRecord, setSelectedRecord] = useState<TryOnRecord | null>(null);
+  const [selectedRecord, setSelectedRecord] = useState<TryOnRecord | null>(
+    null,
+  );
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
   // ── Fetch history whenever screen is focused ─────────────────────────────────
@@ -80,13 +83,13 @@ export default function TryOnHistoryScreen() {
   useFocusEffect(
     useCallback(() => {
       fetchHistory();
-    }, [fetchHistory])
+    }, [fetchHistory]),
   );
 
   // ── Delete ───────────────────────────────────────────────────────────────────
 
   const handleDelete = (record: TryOnRecord) => {
-    Alert.alert(
+    showAlert(
       "Delete Try-On",
       "Are you sure you want to delete this try-on? This cannot be undone.",
       [
@@ -104,13 +107,13 @@ export default function TryOnHistoryScreen() {
               });
               setRecords((prev) => prev.filter((r) => r._id !== record._id));
             } catch {
-              Alert.alert("Error", "Failed to delete. Please try again.");
+              showAlert("Error", "Failed to delete. Please try again.");
             } finally {
               setDeletingId(null);
             }
           },
         },
-      ]
+      ],
     );
   };
 
@@ -192,12 +195,14 @@ export default function TryOnHistoryScreen() {
       style={styles.background}
     >
       <SafeAreaView style={styles.container}>
-        {/* Header */}
+        {/* Header — heading removed (#14) */}
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
+          <TouchableOpacity
+            onPress={() => router.back()}
+            style={styles.backBtn}
+          >
             <Text style={styles.backBtnText}>← Back</Text>
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>My Try-Ons</Text>
           <View style={styles.countBadge}>
             <Text style={styles.countText}>{records.length}</Text>
           </View>
@@ -259,9 +264,12 @@ export default function TryOnHistoryScreen() {
                   </Text>
 
                   {/* Garment used */}
-                  {(selectedRecord.garment ?? selectedRecord.garmentImagePath) && (
+                  {(selectedRecord.garment ??
+                    selectedRecord.garmentImagePath) && (
                     <View style={styles.modalGarmentRow}>
-                      <Text style={styles.modalGarmentLabel}>Garment used:</Text>
+                      <Text style={styles.modalGarmentLabel}>
+                        Garment used:
+                      </Text>
                       <Image
                         source={{
                           uri: (() => {
@@ -285,13 +293,17 @@ export default function TryOnHistoryScreen() {
                   style={styles.deleteBtn}
                   onPress={() => handleDelete(selectedRecord)}
                 >
-                  <Text style={styles.deleteBtnText}>🗑 Delete This Try-On</Text>
+                  <Text style={styles.deleteBtnText}>
+                    🗑 Delete This Try-On
+                  </Text>
                 </TouchableOpacity>
               </>
             )}
           </View>
         </View>
       </Modal>
+
+      {alertElement}
     </LinearGradient>
   );
 }
@@ -331,7 +343,12 @@ const styles = StyleSheet.create({
   },
   countText: { color: "#d8b4fe", fontWeight: "bold", fontSize: 13 },
 
-  loadingContainer: { flex: 1, alignItems: "center", justifyContent: "center", gap: 16 },
+  loadingContainer: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 16,
+  },
   loadingText: { color: "#A0AEC0", fontSize: 14 },
 
   listContent: { paddingHorizontal: 16, paddingBottom: 30 },
@@ -374,10 +391,25 @@ const styles = StyleSheet.create({
   cardDate: { color: "#A0AEC0", fontSize: 11 },
 
   // Empty state
-  emptyContainer: { flex: 1, alignItems: "center", justifyContent: "center", padding: 40 },
+  emptyContainer: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    padding: 40,
+  },
   emptyIcon: { fontSize: 64, marginBottom: 16 },
-  emptyTitle: { color: "#FFFFFF", fontSize: 22, fontWeight: "bold", marginBottom: 8 },
-  emptySubtitle: { color: "#64748b", fontSize: 14, textAlign: "center", marginBottom: 32 },
+  emptyTitle: {
+    color: "#FFFFFF",
+    fontSize: 22,
+    fontWeight: "bold",
+    marginBottom: 8,
+  },
+  emptySubtitle: {
+    color: "#64748b",
+    fontSize: 14,
+    textAlign: "center",
+    marginBottom: 32,
+  },
   emptyBtn: { width: "100%", borderRadius: 14, overflow: "hidden" },
   emptyBtnGradient: { paddingVertical: 14, alignItems: "center" },
   emptyBtnText: { color: "#FFF", fontWeight: "bold", fontSize: 15 },

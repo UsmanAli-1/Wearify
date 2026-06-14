@@ -1,11 +1,11 @@
 import axios from "axios";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { API_URL1 } from '@/constants/config';
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { API_URL1 } from "@/constants/config";
 import React, { useState } from "react";
 import {
-  Alert,
+  ActivityIndicator,
   Image,
   KeyboardAvoidingView,
   Platform,
@@ -17,7 +17,10 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import Starfield from "../../components/Starfield"; // (Adjust the path if you put it in a components folder)
+import GlassAlert, { GlassAlertButton } from "../../components/GlassAlert";
+import Starfield from "../../components/Starfield";
+
+// ─── Auth Screen ──────────────────────────────────────────────────────────────
 
 export default function AuthScreen() {
   const router = useRouter();
@@ -29,66 +32,76 @@ export default function AuthScreen() {
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
 
-  // YOUR Express Backend URL
+  // Glass alert state
+  const [alertVisible, setAlertVisible] = useState(false);
+  const [alertTitle, setAlertTitle] = useState("");
+  const [alertMessage, setAlertMessage] = useState("");
+  const [alertButtons, setAlertButtons] = useState<GlassAlertButton[]>([]);
+
+  // Submission loading state
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const showAlert = (
+    title: string,
+    message: string,
+    buttons?: GlassAlertButton[],
+  ) => {
+    setAlertTitle(title);
+    setAlertMessage(message);
+    setAlertButtons(buttons ?? [{ text: "OK" }]);
+    setAlertVisible(true);
+  };
+
   const handleAuth = async () => {
+    setIsSubmitting(true);
     try {
       if (isLogin) {
-        // ---------------- REAL LOGIN ----------------
-        console.log("Attempting to login...");
         const response = await axios.post(
           `${API_URL1}/login`,
-          {
-            email: email.toLowerCase(),
-            password: password,
-          },
-          {
-            headers: { "Bypass-Tunnel-Reminder": "true" }, // Added just in case!
-          },
+          { email: email.toLowerCase(), password },
+          { headers: { "Bypass-Tunnel-Reminder": "true" } },
         );
 
-        console.log("Login Success:", response.data);
+        await AsyncStorage.setItem("authToken", response.data.token);
+        await AsyncStorage.setItem(
+          "userId",
+          response.data.user?.id ?? response.data.user?._id ?? "",
+        );
 
-        // Save token and user data to AsyncStorage
-        await AsyncStorage.setItem('authToken', response.data.token);
-        await AsyncStorage.setItem('userId', response.data.user?.id ?? response.data.user?._id ?? '');
-
-        Alert.alert("Success", "Welcome back!");
-        router.replace("/dashboard");
+        showAlert("Welcome back! 👋", "You've successfully signed in.", [
+          {
+            text: "Let's Go",
+            onPress: () => router.replace("/dashboard"),
+          },
+        ]);
       } else {
-        // ---------------- REAL SIGNUP ----------------
-        console.log("Attempting to register...");
-        const response = await axios.post(
+        await axios.post(
           `${API_URL1}/`,
-          {
-            name: name,
-            email: email.toLowerCase(),
-            phone: phone,
-            password: password,
-          },
-          {
-            headers: { "Bypass-Tunnel-Reminder": "true" },
-          },
+          { name, email: email.toLowerCase(), phone, password },
+          { headers: { "Bypass-Tunnel-Reminder": "true" } },
         );
 
-        console.log("Signup Success:", response.data);
-        Alert.alert(
-          "Account Created!",
+        showAlert(
+          "Account Created! 🎉",
           "You can now log in with your credentials.",
+          [
+            {
+              text: "Sign In",
+              onPress: () => setIsLogin(true),
+            },
+          ],
         );
-        setIsLogin(true);
       }
     } catch (error) {
-      console.log("🚨 RAW NETWORK ERROR:", error);
-
       let errorMessage = "Cannot connect to server.";
-
       if (axios.isAxiosError(error)) {
         errorMessage = error.response?.data?.message || error.message;
       } else if (error instanceof Error) {
         errorMessage = error.message;
       }
-
-      Alert.alert("Connection Error", errorMessage);
+      showAlert("Error", errorMessage);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -99,16 +112,26 @@ export default function AuthScreen() {
       end={{ x: 1, y: 1 }}
       style={styles.backgroundGradient}
     >
+      <Starfield />
       <SafeAreaView style={styles.container}>
         <Image
           source={require("../../assets/images/logo1.png")}
-          style={{ width: 64, height: 64, resizeMode: 'contain', marginTop: 32, marginLeft: 20 }}
+          style={{
+            width: 64,
+            height: 64,
+            resizeMode: "contain",
+            marginTop: 32,
+            marginLeft: 20,
+          }}
         />
         <KeyboardAvoidingView
           behavior={Platform.OS === "ios" ? "padding" : "height"}
           style={styles.keyboardView}
         >
-          <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+          <ScrollView
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+          >
             <View style={styles.headerContainer}>
               <Text style={styles.title}>
                 {isLogin ? "Sign In" : "Sign Up"}
@@ -169,8 +192,12 @@ export default function AuthScreen() {
               </View>
 
               <TouchableOpacity
-                style={styles.buttonContainer}
+                style={[
+                  styles.buttonContainer,
+                  isSubmitting && styles.buttonDisabled,
+                ]}
                 onPress={handleAuth}
+                disabled={isSubmitting}
               >
                 <LinearGradient
                   colors={["#8b5cf6", "#3b82f6"]}
@@ -178,9 +205,18 @@ export default function AuthScreen() {
                   end={{ x: 1, y: 0 }}
                   style={styles.gradient}
                 >
-                  <Text style={styles.buttonText}>
-                    {isLogin ? "Sign In" : "Sign Up"}
-                  </Text>
+                  {isSubmitting ? (
+                    <View style={styles.loadingRow}>
+                      <ActivityIndicator size="small" color="#FFFFFF" />
+                      <Text style={styles.buttonText}>
+                        {isLogin ? "Signing in..." : "Signing up..."}
+                      </Text>
+                    </View>
+                  ) : (
+                    <Text style={styles.buttonText}>
+                      {isLogin ? "Sign In" : "Sign Up"}
+                    </Text>
+                  )}
                 </LinearGradient>
               </TouchableOpacity>
 
@@ -189,7 +225,9 @@ export default function AuthScreen() {
                 onPress={() => setIsLogin(!isLogin)}
               >
                 <Text style={styles.toggleText}>
-                  {isLogin ? "Don't have an account? " : "Already have an account? "}
+                  {isLogin
+                    ? "Don't have an account? "
+                    : "Already have an account? "}
                   <Text style={styles.toggleHighlight}>
                     {isLogin ? "Sign Up" : "Sign In"}
                   </Text>
@@ -199,18 +237,22 @@ export default function AuthScreen() {
           </ScrollView>
         </KeyboardAvoidingView>
       </SafeAreaView>
+
+      {/* Glassmorphism Alert */}
+      <GlassAlert
+        visible={alertVisible}
+        title={alertTitle}
+        message={alertMessage}
+        buttons={alertButtons}
+        onClose={() => setAlertVisible(false)}
+      />
     </LinearGradient>
   );
 }
 
 const styles = StyleSheet.create({
-  backgroundGradient: {
-    flex: 1,
-  },
-  container: {
-    flex: 1,
-    backgroundColor: "transparent", // 2. Made transparent to reveal the gradient
-  },
+  backgroundGradient: { flex: 1 },
+  container: { flex: 1, backgroundColor: "transparent" },
   keyboardView: { flex: 1, padding: 20, paddingTop: 0 },
   headerContainer: { marginBottom: 0, marginTop: 30 },
   title: {
@@ -219,7 +261,6 @@ const styles = StyleSheet.create({
     color: "#8b5cf6",
     marginBottom: 8,
   },
-  subtitle: { fontSize: 16, color: "#A0AEC0", lineHeight: 24 },
   card: {
     backgroundColor: "rgba(255, 255, 255, 0.03)",
     borderRadius: 24,
@@ -243,6 +284,12 @@ const styles = StyleSheet.create({
     marginTop: 12,
     borderRadius: 12,
     overflow: "hidden",
+  },
+  buttonDisabled: { opacity: 0.7 },
+  loadingRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
   },
   gradient: {
     paddingVertical: 16,

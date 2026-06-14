@@ -1,27 +1,37 @@
-import { API_URL } from '@/constants/config';
-import { useStripe } from '@stripe/stripe-react-native';
-import axios from 'axios';
-import * as ImagePicker from 'expo-image-picker';
-import { LinearGradient } from 'expo-linear-gradient';
-import { useRouter } from 'expo-router';
-import React, { useEffect, useState } from 'react';
+import { Ionicons } from "@expo/vector-icons";
+import { API_URL } from "@/constants/config";
+import axios from "axios";
+import * as ImagePicker from "expo-image-picker";
+import { LinearGradient } from "expo-linear-gradient";
+import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
+import React, { useCallback, useEffect, useState } from "react";
 import {
   ActivityIndicator,
-  Alert,
   FlatList,
   Image,
   Modal,
   SafeAreaView,
-  ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
-} from 'react-native';
+} from "react-native";
+import Animated, {
+  FadeIn,
+  FadeInDown,
+  FadeInUp,
+  FadeOut,
+  useAnimatedStyle,
+  useSharedValue,
+  withRepeat,
+  withSequence,
+  withTiming,
+} from "react-native-reanimated";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import SmartCamera from "../../components/SmartCamera";
+import { useGlassAlert } from "../../components/GlassAlert";
 
-import SmartCamera from '../../components/SmartCamera';
-
-// ─── Types ───────────────────────────────────────────────────────────────────
+// ─── Types ────────────────────────────────────────────────────────────────────
 
 interface Garment {
   _id: string;
@@ -29,72 +39,165 @@ interface Garment {
   imagePath: string;
 }
 
-type PlanKey = 'basic' | 'pro' | 'premium';
-
-interface Plan {
-  key: PlanKey;
-  name: string;
-  price: string;
-  points: number;
-  diamonds: number;   // diamonds added to local state on success
-  popular?: boolean;
-}
-
-// ─── Plan definitions (must match backend `plans` object) ────────────────────
-
-const PLANS: Plan[] = [
-  { key: 'basic', name: 'Basic', price: 'Rs. 1,200', points: 400, diamonds: 400 },
-  { key: 'pro', name: 'Pro', price: 'Rs. 3,000', points: 1000, diamonds: 1000, popular: true },
-  { key: 'premium', name: 'Premium', price: 'Rs. 6,000', points: 2000, diamonds: 2000 },
-];
-
-// ─── Helper: get auth token (adjust to however you store it) ─────────────────
-
 async function getAuthToken(): Promise<string> {
-  // Replace with your actual token retrieval, e.g. from AsyncStorage or context
-  const AsyncStorage = await import('@react-native-async-storage/async-storage');
-  const token = await AsyncStorage.default.getItem('authToken');
-  return token ?? '';
+  const AsyncStorageLib =
+    await import("@react-native-async-storage/async-storage");
+  const token = await AsyncStorageLib.default.getItem("authToken");
+  return token ?? "";
 }
 
-// ─── Component ───────────────────────────────────────────────────────────────
+// ─── Pulsing dot loader ───────────────────────────────────────────────────────
+
+function PulsingDots() {
+  const dot1 = useSharedValue(0.3);
+  const dot2 = useSharedValue(0.3);
+  const dot3 = useSharedValue(0.3);
+
+  useEffect(() => {
+    const pulse = (sv: typeof dot1, delay: number) => {
+      setTimeout(() => {
+        sv.value = withRepeat(
+          withSequence(
+            withTiming(1, { duration: 500 }),
+            withTiming(0.3, { duration: 500 }),
+          ),
+          -1,
+          false,
+        );
+      }, delay);
+    };
+    pulse(dot1, 0);
+    pulse(dot2, 200);
+    pulse(dot3, 400);
+    // Reanimated shared values are stable refs — safe to omit from deps.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const s1 = useAnimatedStyle(() => ({ opacity: dot1.value }));
+  const s2 = useAnimatedStyle(() => ({ opacity: dot2.value }));
+  const s3 = useAnimatedStyle(() => ({ opacity: dot3.value }));
+
+  return (
+    <View
+      style={{
+        flexDirection: "row",
+        gap: 8,
+        justifyContent: "center",
+        marginTop: 16,
+      }}
+    >
+      {[s1, s2, s3].map((s, i) => (
+        <Animated.View
+          key={i}
+          style={[
+            {
+              width: 10,
+              height: 10,
+              borderRadius: 5,
+              backgroundColor: "#8b5cf6",
+            },
+            s,
+          ]}
+        />
+      ))}
+    </View>
+  );
+}
+
+// ─── Component ────────────────────────────────────────────────────────────────
 
 export default function DashboardScreen() {
   const router = useRouter();
-  const { presentPaymentSheet, initPaymentSheet } = useStripe();
+  const params = useLocalSearchParams<{
+    garmentId?: string;
+    garmentName?: string;
+    garmentImagePath?: string;
+    personImage?: string;
+  }>();
+  const { show: showAlert, element: alertElement } = useGlassAlert();
 
   // --- Data & Economy State ---
   const [garments, setGarments] = useState<Garment[]>([]);
   const [isLoadingGarments, setIsLoadingGarments] = useState(true);
-  const [diamonds, setDiamonds] = useState(120);
-  const [showPlans, setShowPlans] = useState(false);
+  const [diamonds, setDiamonds] = useState<number | null>(null);
 
   // --- UI & Action State ---
-  const [selectedGarmentId, setSelectedGarmentId] = useState<string | null>(null);
+  const [selectedGarmentId, setSelectedGarmentId] = useState<string | null>(
+    null,
+  );
   const [personImage, setPersonImage] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedImage, setGeneratedImage] = useState<string | null>(null);
   const [showCamera, setShowCamera] = useState(false);
 
-  // --- Payment State ---
-  const [payingPlan, setPayingPlan] = useState<PlanKey | null>(null);
+  // ── Fetch diamonds (points) from backend on focus (#20) ──────────────────────
+  // Mirrors GET /users/me used elsewhere — ensures mobile shows the same
+  // balance as web instead of a hardcoded value. Refetched on focus so
+  // spending diamonds in AI Suggest or buying via Payment screen is reflected
+  // immediately when returning to the dashboard.
+  useFocusEffect(
+    useCallback(() => {
+      const fetchUserData = async () => {
+        try {
+          const token = await getAuthToken();
+          if (!token) return;
+          const { data } = await axios.get(`${API_URL}/users/me`, {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          setDiamonds(data.points ?? 0);
+        } catch {
+          setDiamonds(0);
+        }
+      };
+      fetchUserData();
+    }, []),
+  );
 
   // ── Fetch garments ──────────────────────────────────────────────────────────
   useEffect(() => {
     const fetchGarments = async () => {
       try {
         const response = await axios.get(`${API_URL}/garments`, {
-          headers: { 'Bypass-Tunnel-Reminder': 'true' },
+          headers: { "Bypass-Tunnel-Reminder": "true" },
         });
         setGarments(response.data);
       } catch (error) {
-        console.error('Failed to fetch garments:', error);
+        console.error("Failed to fetch garments:", error);
       } finally {
         setIsLoadingGarments(false);
       }
     };
     fetchGarments();
   }, []);
+
+  // ── Handle incoming AI suggestion (garment + photo) (#12) ───────────────────
+  useEffect(() => {
+    if (!params.garmentId || isLoadingGarments) return;
+
+    const incomingId = params.garmentId;
+    const exists = garments.some((g) => g._id === incomingId);
+
+    if (!exists && params.garmentImagePath) {
+      setGarments((prev) => [
+        {
+          _id: incomingId,
+          name: params.garmentName ?? "Suggested",
+          imagePath: params.garmentImagePath as string,
+        },
+        ...prev,
+      ]);
+    }
+
+    setSelectedGarmentId(incomingId);
+
+    if (params.personImage) {
+      setPersonImage(params.personImage);
+      setGeneratedImage(null);
+    }
+    // Intentionally only re-run when garmentId/loading state changes —
+    // params.* and garments are read once per incoming navigation.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [params.garmentId, isLoadingGarments]);
 
   // ── Image selection ─────────────────────────────────────────────────────────
 
@@ -104,15 +207,15 @@ export default function DashboardScreen() {
   };
 
   const handleGalleryOpen = async () => {
-    const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    const permissionResult =
+      await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!permissionResult.granted) {
-      Alert.alert('Permission Required', 'We need access to your photos!');
+      showAlert("Permission Required", "We need access to your photos!");
       return;
     }
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      aspect: [3, 4],
+      allowsEditing: false,
       quality: 0.8,
     });
     if (!result.canceled) {
@@ -122,22 +225,23 @@ export default function DashboardScreen() {
   };
 
   const handleImageOption = () => {
-    Alert.alert(
-      'Add Target Person',
-      'How would you like to provide your photo?',
-      [
-        { text: 'Smart Camera (Recommended)', onPress: handleCameraOpen },
-        { text: 'Choose from Gallery', onPress: handleGalleryOpen },
-        { text: 'Cancel', style: 'cancel' },
-      ],
-    );
+    showAlert("Add Your Photo", "How would you like to provide your photo?", [
+      { text: "Smart Camera", onPress: handleCameraOpen },
+      { text: "Gallery", onPress: handleGalleryOpen },
+      { text: "Cancel", style: "cancel" },
+    ]);
+  };
+
+  const handleRemoveImage = () => {
+    setPersonImage(null);
+    setGeneratedImage(null);
   };
 
   // ── Try-on ──────────────────────────────────────────────────────────────────
 
   const handleGenerateTryOn = async () => {
-    if (diamonds < 40) {
-      setShowPlans(true);
+    if ((diamonds ?? 0) < 40) {
+      router.push("/PaymentScreen" as any);
       return;
     }
 
@@ -145,230 +249,187 @@ export default function DashboardScreen() {
 
     try {
       const token = await getAuthToken();
-
-      // Get the selected garment details
-      const selectedGarment = garments.find(g => g._id === selectedGarmentId);
+      const selectedGarment = garments.find((g) => g._id === selectedGarmentId);
       if (!selectedGarment) return;
 
-      // Build multipart form
       const formData = new FormData();
-      formData.append('image', {
+      formData.append("image", {
         uri: personImage,
-        name: 'person.jpg',
-        type: 'image/jpeg',
+        name: "person.jpg",
+        type: "image/jpeg",
       } as any);
-      formData.append('garmentId', selectedGarment._id);
+      formData.append("garmentId", selectedGarment._id);
 
-      const { data } = await axios.post(
-        `${API_URL}/users/generate`,
-        formData,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'multipart/form-data',
-          },
-          timeout: 120000, // 2 min timeout for AI processing
-        }
-      );
+      const { data } = await axios.post(`${API_URL}/users/generate`, formData, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "multipart/form-data",
+        },
+        timeout: 120000,
+      });
 
       setDiamonds(data.points);
-      setGeneratedImage(data.resultImage);  // ← use result directly
+      setGeneratedImage(data.resultImage);
 
       if (data.pointsExhausted) {
-        setShowPlans(true);
-      }
-
-    } catch (err: any) {
-      const msg = err?.response?.data?.message ?? '';
-      const reason = err?.response?.data?.reason ?? '';
-
-      if (msg.includes('full') || msg.includes('Invalid image')) {
-        Alert.alert(
-          'Full Body Required 📸',
-          `Please upload a clear head-to-toe photo.\n\n${reason}`,
-          [{ text: 'Try Again', style: 'default' }]
+        showAlert(
+          "Out of Diamonds! 💎",
+          "You've used all your diamonds. Top up to keep generating try-ons.",
+          [
+            {
+              text: "View Plans",
+              onPress: () => router.push("/PaymentScreen" as any),
+            },
+          ],
         );
-      } else if (msg.includes('points') || msg.includes('Points')) {
-        setShowPlans(true);
-      } else {
-        Alert.alert('Error', msg || 'Something went wrong. Please try again.');
       }
+    } catch (err: any) {
+      const msg = err?.response?.data?.message ?? "";
+      const reason = err?.response?.data?.reason ?? "";
 
+      if (msg.includes("full") || msg.includes("Invalid image")) {
+        showAlert(
+          "Full Body Required 📸",
+          `Please upload a clear head-to-toe photo.\n\n${reason}`,
+          [{ text: "Try Again" }],
+        );
+      } else if (msg.includes("points") || msg.includes("Points")) {
+        showAlert(
+          "Out of Diamonds! 💎",
+          "You don't have enough diamonds for this. Top up to continue.",
+          [
+            {
+              text: "View Plans",
+              onPress: () => router.push("/PaymentScreen" as any),
+            },
+          ],
+        );
+      } else {
+        showAlert("Error", msg || "Something went wrong. Please try again.");
+      }
     } finally {
       setIsGenerating(false);
     }
   };
+
   const handleReset = () => {
     setGeneratedImage(null);
     setSelectedGarmentId(null);
     setPersonImage(null);
   };
-  // ── Payment flow ────────────────────────────────────────────────────────────
 
-  /**
-   * 1. Ask backend for a PaymentIntent clientSecret
-   * 2. Init the Stripe payment sheet
-   * 3. Present the native card UI
-   * 4. On success → add diamonds locally (backend webhook handles DB update)
-   */
-  const handlePurchasePlan = async (plan: Plan) => {
-    setPayingPlan(plan.key);
-    try {
-      // Step 1 – get clientSecret from your backend
-      const token = await getAuthToken();
-      const { data } = await axios.post(
-        `${API_URL}/payment/create-payment-intent`,
-        { plan: plan.key },
-        { headers: { Authorization: `Bearer ${token}` } },
-      );
-      const { clientSecret } = data;
+  // ── Sign out ─────────────────────────────────────────────────────────────────
 
-      // Step 2 – initialise the payment sheet
-      const { error: initError } = await initPaymentSheet({
-        paymentIntentClientSecret: clientSecret,
-        merchantDisplayName: 'Wearify',
-        appearance: {
-          colors: {
-            primary: '#8b5cf6',
-            background: '#0A0F1C',
-            componentBackground: '#141929',
-            componentBorder: '#1f2937',
-            componentDivider: '#1f2937',
-            primaryText: '#FFFFFF',
-            secondaryText: '#A0AEC0',
-            componentText: '#FFFFFF',
-            placeholderText: '#64748b',
-            icon: '#8b5cf6',
-            error: '#ef4444',
-          },
-          shapes: {
-            borderRadius: 12,
-            borderWidth: 0.5,
-          },
-          primaryButton: {
-            colors: {
-              background: '#8b5cf6',
-              text: '#FFFFFF',
-            },
-            shapes: { borderRadius: 12 },
-          },
+  const handleSignOut = () => {
+    showAlert("Sign Out", "Are you sure you want to sign out?", [
+      { text: "Cancel", style: "cancel" },
+      {
+        text: "Sign Out",
+        style: "destructive",
+        onPress: async () => {
+          const token = await getAuthToken();
+
+          // #15 — clear all try-on history before logging out.
+          // No bulk-delete endpoint exists, so fetch the list and
+          // delete each record individually.
+          if (token) {
+            try {
+              const { data: history } = await axios.get(
+                `${API_URL}/images/my`,
+                {
+                  headers: { Authorization: `Bearer ${token}` },
+                },
+              );
+
+              await Promise.all(
+                (history ?? []).map(
+                  (record: { _id: string }) =>
+                    axios
+                      .delete(`${API_URL}/images/${record._id}`, {
+                        headers: { Authorization: `Bearer ${token}` },
+                      })
+                      .catch(() => null), // don't block logout if one delete fails
+                ),
+              );
+            } catch {
+              // If fetching history fails, proceed with logout anyway
+            }
+          }
+
+          await AsyncStorage.multiRemove(["authToken", "userId"]);
+          // Clear local state so images don't persist on next login (#18)
+          setPersonImage(null);
+          setGeneratedImage(null);
+          setSelectedGarmentId(null);
+          setDiamonds(null);
+          router.replace("/auth");
         },
-      });
-
-      if (initError) {
-        Alert.alert('Payment Error', initError.message);
-        setPayingPlan(null);
-        return;
-      }
-
-      // Step 3 – present native card sheet
-      const { error: payError } = await presentPaymentSheet();
-
-      if (payError) {
-        if (payError.code !== 'Canceled') {
-          Alert.alert('Payment Failed', payError.message);
-        }
-        setPayingPlan(null);
-        return;
-      }
-
-      // Step 4 – payment succeeded 🎉
-      setDiamonds(prev => prev + plan.diamonds);
-      setShowPlans(false);
-      setPayingPlan(null);
-
-      Alert.alert(
-        '💎 Purchase Successful!',
-        `${plan.diamonds} diamonds have been added to your account. Happy styling!`,
-        [{ text: 'Awesome!', style: 'default' }],
-      );
-    } catch (err: any) {
-      console.error('Payment error:', err);
-      Alert.alert(
-        'Payment Error',
-        err?.response?.data?.message ?? 'Something went wrong. Please try again.',
-      );
-      setPayingPlan(null);
-    }
+      },
+    ]);
   };
 
-  // ── Derived state ───────────────────────────────────────────────────────────
+  // ── Derived ─────────────────────────────────────────────────────────────────
   const isReadyToGenerate = selectedGarmentId !== null && personImage !== null;
 
   // ── Render ──────────────────────────────────────────────────────────────────
   return (
     <LinearGradient
-      colors={['#1c103f', '#080d1a', '#080d1a', '#2d1445']}
+      colors={["#1c103f", "#080d1a", "#080d1a", "#2d1445"]}
       start={{ x: 0, y: 0 }}
       end={{ x: 1, y: 1 }}
       style={styles.backgroundGradient}
     >
       <SafeAreaView style={styles.container}>
-        <View style={styles.mainWrapper}>
-
+        <Animated.View
+          entering={FadeInDown.duration(400)}
+          style={styles.mainWrapper}
+        >
           {/* ── HEADER ── */}
           <View style={styles.header}>
             <Image
-              source={require('../../assets/images/logo1.png')}
+              source={require("../../assets/images/logo1.png")}
               style={styles.headerLogo}
               resizeMode="contain"
             />
             <View style={styles.headerRight}>
-              {/* Tapping the diamond badge opens the plans modal */}
-              <TouchableOpacity onPress={() => setShowPlans(true)}>
+              {/* Diamond badge */}
+              <TouchableOpacity
+                onPress={() => router.push("/PaymentScreen" as any)}
+              >
                 <View style={styles.diamondBadge}>
-                  <Text style={styles.diamondText}>💎 {diamonds}</Text>
+                  <Text style={styles.diamondText}>
+                    💎 {diamonds === null ? "..." : diamonds}
+                  </Text>
                 </View>
               </TouchableOpacity>
 
-              <TouchableOpacity onPress={() => router.replace('/auth')}>
-                <LinearGradient
-                  colors={['#8b5cf6', '#3b82f6']}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 0 }}
-                  style={styles.signOutBtn}
-                >
-                  <Text style={styles.signOutText}>Sign Out</Text>
-                </LinearGradient>
+              {/* About Us */}
+              <TouchableOpacity
+                onPress={() => router.push("/AboutUsScreen" as any)}
+                style={styles.signOutBtn}
+              >
+                <Ionicons
+                  name="information-circle-outline"
+                  size={20}
+                  color="#FFFFFF"
+                />
+              </TouchableOpacity>
+
+              {/* Sign out — icon only (#5) */}
+              <TouchableOpacity
+                onPress={handleSignOut}
+                style={styles.signOutBtn}
+              >
+                <Ionicons name="log-out-outline" size={20} color="#FFFFFF" />
               </TouchableOpacity>
             </View>
           </View>
 
-          {/* ── QUICK NAV BUTTONS ── */}
-          <View style={styles.quickNav}>
-            <TouchableOpacity
-              style={styles.quickNavBtn}
-              onPress={() => router.push('/AISuggestionScreen' as any)}
-            >
-              <LinearGradient
-                colors={['rgba(139,92,246,0.2)', 'rgba(59,130,246,0.2)']}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 0 }}
-                style={styles.quickNavGradient}
-              >
-                <Text style={styles.quickNavIcon}>✨</Text>
-                <Text style={styles.quickNavText}>AI Suggest</Text>
-              </LinearGradient>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={styles.quickNavBtn}
-              onPress={() => router.push('/TryOnHistoryScreen' as any)}
-            >
-              <LinearGradient
-                colors={['rgba(16,185,129,0.2)', 'rgba(5,150,105,0.2)']}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 0 }}
-                style={styles.quickNavGradient}
-              >
-                <Text style={styles.quickNavIcon}>🕓</Text>
-                <Text style={styles.quickNavText}>My Try-Ons</Text>
-              </LinearGradient>
-            </TouchableOpacity>
-          </View>
-
           {/* ── GARMENT CAROUSEL ── */}
-          <View style={styles.carouselContainer}>
+          <Animated.View
+            entering={FadeInDown.delay(100).duration(400)}
+            style={styles.carouselContainer}
+          >
             {isLoadingGarments ? (
               <ActivityIndicator size="small" color="#8b5cf6" />
             ) : (
@@ -376,19 +437,24 @@ export default function DashboardScreen() {
                 horizontal
                 showsHorizontalScrollIndicator={false}
                 data={garments}
-                keyExtractor={item => item._id}
+                keyExtractor={(item) => item._id}
                 renderItem={({ item }) => {
                   const isSelected = selectedGarmentId === item._id;
                   return (
                     <TouchableOpacity
-                      onPress={() => setSelectedGarmentId(item._id)}
-                      style={[styles.garmentCard, isSelected && styles.garmentCardSelected]}
+                      onPress={() =>
+                        !isGenerating && setSelectedGarmentId(item._id)
+                      }
+                      style={[
+                        styles.garmentCard,
+                        isSelected && styles.garmentCardSelected,
+                      ]}
                     >
                       <Image
                         source={{
-                          uri: item.imagePath.startsWith('http')
+                          uri: item.imagePath.startsWith("http")
                             ? item.imagePath
-                            : `${API_URL.replace('/api', '')}/${item.imagePath.replace(/\\/g, '/')}`,
+                            : `${API_URL.replace("/api", "")}/${item.imagePath.replace(/\\/g, "/")}`,
                         }}
                         style={styles.garmentImage}
                       />
@@ -402,69 +468,122 @@ export default function DashboardScreen() {
                 }}
               />
             )}
-          </View>
+          </Animated.View>
 
           {/* ── DYNAMIC CANVAS ── */}
-          <View style={styles.canvasWrapper}>
+          <Animated.View
+            entering={FadeIn.delay(150).duration(400)}
+            style={styles.canvasWrapper}
+          >
             <TouchableOpacity
               style={[
                 styles.mainContainer,
                 generatedImage ? styles.mainContainerSuccess : null,
               ]}
-              onPress={generatedImage ? undefined : handleImageOption}
-              activeOpacity={generatedImage ? 1 : 0.7}
+              onPress={
+                generatedImage || isGenerating
+                  ? undefined
+                  : personImage
+                    ? undefined
+                    : handleImageOption
+              }
+              activeOpacity={generatedImage || personImage ? 1 : 0.7}
             >
               {isGenerating ? (
                 <View style={styles.placeholder}>
-                  <ActivityIndicator size="large" color="#8b5cf6" style={{ marginBottom: 16 }} />
-                  <Text style={styles.uploadText}>Generating AI Preview...</Text>
-                  <Text style={styles.subUploadText}>Applying diffusion models</Text>
+                  <PulsingDots />
+                  <Text style={[styles.uploadText, { marginTop: 20 }]}>
+                    Generating AI Preview...
+                  </Text>
+                  <Text style={styles.subUploadText}>
+                    Applying diffusion models
+                  </Text>
                 </View>
               ) : generatedImage ? (
-                <Image source={{ uri: generatedImage }} style={styles.previewImage} />
+                <Image
+                  source={{ uri: generatedImage }}
+                  style={styles.previewImage}
+                />
               ) : personImage ? (
-                <View style={{ flex: 1, width: '100%' }}>
-                  <Image source={{ uri: personImage }} style={styles.previewImage} />
-                  <View style={styles.editOverlay}>
-                    <Text style={styles.editOverlayText}>Tap to change photo</Text>
-                  </View>
+                <View style={{ flex: 1, width: "100%" }}>
+                  <Image
+                    source={{ uri: personImage }}
+                    style={styles.previewImage}
+                  />
+                  {/* ✕ cancel button (#16) */}
+                  <TouchableOpacity
+                    style={styles.cancelImageBtn}
+                    onPress={handleRemoveImage}
+                  >
+                    <Text style={styles.cancelImageText}>✕</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles.editOverlay}
+                    onPress={handleImageOption}
+                  >
+                    <Text style={styles.editOverlayText}>
+                      Tap to change photo
+                    </Text>
+                  </TouchableOpacity>
                 </View>
               ) : (
-                <View style={styles.placeholder}>
-                  <Text style={styles.iconText}>📸</Text>
-                  <Text style={styles.uploadText}>Add Target Person</Text>
-                  <Text style={styles.subUploadText}>Tap to open camera or gallery</Text>
-                </View>
+                <TouchableOpacity
+                  style={styles.placeholder}
+                  onPress={handleImageOption}
+                  activeOpacity={0.7}
+                >
+                  <Text style={styles.uploadText}>Upload Image</Text>
+                  <Text style={styles.subUploadText}>
+                    Tap to open camera or gallery
+                  </Text>
+                </TouchableOpacity>
               )}
             </TouchableOpacity>
-          </View>
+          </Animated.View>
 
           {/* ── ACTION BUTTON ── */}
-          <View style={styles.footer}>
+          <Animated.View
+            entering={FadeInUp.delay(200).duration(400)}
+            style={styles.footer}
+          >
             {!generatedImage ? (
               <TouchableOpacity
                 style={[
                   styles.buttonContainer,
-                  (!isReadyToGenerate || isGenerating) ? styles.buttonDisabled : null,
+                  !isReadyToGenerate || isGenerating
+                    ? styles.buttonDisabled
+                    : null,
                 ]}
                 disabled={!isReadyToGenerate || isGenerating}
                 onPress={handleGenerateTryOn}
               >
                 <LinearGradient
-                  colors={isReadyToGenerate ? ['#8b5cf6', '#3b82f6'] : ['#1f2937', '#1f2937']}
+                  colors={
+                    isReadyToGenerate
+                      ? ["#8b5cf6", "#3b82f6"]
+                      : ["#1f2937", "#1f2937"]
+                  }
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 0 }}
                   style={styles.gradient}
                 >
-                  <Text style={[styles.buttonText, !isReadyToGenerate ? styles.buttonTextDisabled : null]}>
-                    {isGenerating ? 'Processing...' : 'Try On (40 💎)'}
+                  <Text
+                    style={[
+                      styles.buttonText,
+                      !isReadyToGenerate ? styles.buttonTextDisabled : null,
+                    ]}
+                  >
+                    {isGenerating ? "Processing..." : "Try On (40 💎)"}
                   </Text>
                 </LinearGradient>
               </TouchableOpacity>
             ) : (
-              <TouchableOpacity style={styles.buttonContainer} onPress={handleReset}>
+              <TouchableOpacity
+                style={styles.buttonContainer}
+                onPress={handleReset}
+              >
                 <LinearGradient
-                  colors={['#10b981', '#059669']}
+                  colors={["#10b981", "#059669"]}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 0 }}
                   style={styles.gradient}
@@ -473,98 +592,111 @@ export default function DashboardScreen() {
                 </LinearGradient>
               </TouchableOpacity>
             )}
-          </View>
-        </View>
+          </Animated.View>
+
+          {/* ── BOTTOM NAV — AI Suggest, My Try-Ons & Plans (#4) ── */}
+          <Animated.View
+            entering={FadeInUp.delay(250).duration(400)}
+            style={styles.bottomNav}
+          >
+            <TouchableOpacity
+              style={styles.bottomNavBtn}
+              onPress={() =>
+                !isGenerating && router.push("/AISuggestionScreen" as any)
+              }
+              disabled={isGenerating}
+            >
+              <LinearGradient
+                colors={["rgba(139,92,246,0.25)", "rgba(59,130,246,0.25)"]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={styles.bottomNavGradient}
+              >
+                <Text style={styles.bottomNavIcon}>✨</Text>
+                <Text style={styles.bottomNavText}>AI Suggest</Text>
+              </LinearGradient>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.bottomNavBtn}
+              onPress={() =>
+                !isGenerating && router.push("/TryOnHistoryScreen" as any)
+              }
+              disabled={isGenerating}
+            >
+              <LinearGradient
+                colors={["rgba(16,185,129,0.25)", "rgba(5,150,105,0.25)"]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={styles.bottomNavGradient}
+              >
+                <Text style={styles.bottomNavIcon}>🕓</Text>
+                <Text style={styles.bottomNavText}>My Try-Ons</Text>
+              </LinearGradient>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.bottomNavBtn}
+              onPress={() =>
+                !isGenerating && router.push("/PaymentScreen" as any)
+              }
+              disabled={isGenerating}
+            >
+              <LinearGradient
+                colors={["rgba(245,158,11,0.25)", "rgba(217,119,6,0.25)"]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={styles.bottomNavGradient}
+              >
+                <Text style={styles.bottomNavIcon}>💎</Text>
+                <Text style={styles.bottomNavText}>Plans</Text>
+              </LinearGradient>
+            </TouchableOpacity>
+          </Animated.View>
+        </Animated.View>
       </SafeAreaView>
 
+      {/* ── GENERATION LOCK OVERLAY (#17) ── */}
+      {isGenerating && (
+        <Animated.View
+          entering={FadeIn.duration(200)}
+          exiting={FadeOut.duration(200)}
+          style={styles.generatingOverlay}
+        >
+          <View style={styles.generatingCard}>
+            <PulsingDots />
+            <Text style={styles.generatingTitle}>Generating your look...</Text>
+            <Text style={styles.generatingSubtitle}>
+              This may take up to 2 minutes
+            </Text>
+          </View>
+        </Animated.View>
+      )}
+
       {/* ── SMART CAMERA MODAL ── */}
-      <Modal visible={showCamera} animationType="slide" onRequestClose={() => setShowCamera(false)}>
-        <View style={{ flex: 1, backgroundColor: '#000' }}>
+      <Modal
+        visible={showCamera}
+        animationType="slide"
+        onRequestClose={() => setShowCamera(false)}
+      >
+        <View style={{ flex: 1, backgroundColor: "#000" }}>
           <SmartCamera
-            onCapture={uri => {
+            onCapture={(uri) => {
               setPersonImage(uri);
               setShowCamera(false);
             }}
           />
-          <TouchableOpacity style={styles.closeCameraBtn} onPress={() => setShowCamera(false)}>
+          <TouchableOpacity
+            style={styles.closeCameraBtn}
+            onPress={() => setShowCamera(false)}
+          >
             <Text style={styles.closeCameraText}>Cancel</Text>
           </TouchableOpacity>
         </View>
       </Modal>
 
-      {/* ── PAYWALL / PLANS MODAL ── */}
-      <Modal visible={showPlans} animationType="slide" transparent={true}>
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-
-            {/* Close button */}
-            <TouchableOpacity style={styles.closeModalBtn} onPress={() => setShowPlans(false)}>
-              <Text style={styles.closeModalText}>✕</Text>
-            </TouchableOpacity>
-
-            {/* Header changes depending on context */}
-            {diamonds < 40 ? (
-              <>
-                <Text style={styles.modalTitle}>Out of Diamonds!</Text>
-                <Text style={styles.modalSubtitle}>Upgrade your plan to keep generating.</Text>
-              </>
-            ) : (
-              <>
-                <Text style={styles.modalTitle}>💎 {diamonds} Diamonds</Text>
-                <Text style={styles.modalSubtitle}>Top up to generate more try-ons.</Text>
-              </>
-            )}
-
-            {/* Plan cards */}
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.planScroll}
-            >
-              {PLANS.map(plan => {
-                const isPro = plan.popular === true;
-                const isLoading = payingPlan === plan.key;
-
-                return (
-                  <View
-                    key={plan.key}
-                    style={[styles.planCard, isPro && styles.planCardPro]}
-                  >
-                    {/* Popular badge */}
-                    {isPro && (
-                      <View style={styles.popularBadge}>
-                        <Text style={styles.popularText}>Most Popular</Text>
-                      </View>
-                    )}
-
-                    <Text style={styles.planName}>{plan.name}</Text>
-                    <Text style={styles.planPrice}>{plan.price}</Text>
-                    <Text style={styles.planPoints}>{plan.points} Points</Text>
-
-                    {/* CTA button */}
-                    <TouchableOpacity
-                      style={isPro ? styles.planBtnPro : styles.planBtn}
-                      onPress={() => handlePurchasePlan(plan)}
-                      disabled={payingPlan !== null}   // disable all cards while one is loading
-                    >
-                      {isLoading ? (
-                        <ActivityIndicator size="small" color="#FFFFFF" />
-                      ) : (
-                        <Text style={styles.planBtnText}>
-                          {isPro ? 'Upgrade Now' : plan.key === 'basic' ? 'Get Started' : 'Go Premium'}
-                        </Text>
-                      )}
-                    </TouchableOpacity>
-                  </View>
-                );
-              })}
-            </ScrollView>
-
-            {/* Stripe trust badge */}
-            <Text style={styles.stripeBadge}>🔒 Secured by Stripe</Text>
-          </View>
-        </View>
-      </Modal>
+      {/* Glass Alert */}
+      {alertElement}
     </LinearGradient>
   );
 }
@@ -573,208 +705,205 @@ export default function DashboardScreen() {
 
 const styles = StyleSheet.create({
   backgroundGradient: { flex: 1 },
-  container: { flex: 1, backgroundColor: 'transparent' },
-  mainWrapper: { flex: 1, paddingHorizontal: 20, paddingBottom: 20 },
+  container: { flex: 1, backgroundColor: "transparent" },
+  mainWrapper: { flex: 1, paddingHorizontal: 20, paddingBottom: 12 },
 
+  // Header
   header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     marginBottom: 16,
     marginTop: 50,
   },
   headerLogo: { width: 100, height: 40, marginLeft: -25 },
-  headerRight: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  headerRight: { flexDirection: "row", alignItems: "center", gap: 12 },
 
   diamondBadge: {
-    backgroundColor: 'rgba(139, 92, 246, 0.2)',
+    backgroundColor: "rgba(139, 92, 246, 0.2)",
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: 'rgba(139, 92, 246, 0.5)',
+    borderColor: "rgba(139, 92, 246, 0.5)",
   },
-  diamondText: { color: '#FFFFFF', fontWeight: 'bold', fontSize: 14 },
+  diamondText: { color: "#FFFFFF", fontWeight: "bold", fontSize: 14 },
 
-  signOutBtn: { paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20 },
-  signOutText: { color: '#FFFFFF', fontWeight: '600', fontSize: 14 },
-
-  quickNav: {
-    flexDirection: 'row',
-    gap: 12,
-    marginBottom: 16,
-  },
-  quickNavBtn: {
-    flex: 1,
-    borderRadius: 14,
-    overflow: 'hidden',
+  // Sign out icon button (#5)
+  signOutBtn: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: "rgba(139,92,246,0.2)",
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.08)',
+    borderColor: "rgba(139,92,246,0.4)",
+    justifyContent: "center",
+    alignItems: "center",
   },
-  quickNavGradient: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 12,
-    gap: 6,
-  },
-  quickNavIcon: { fontSize: 16 },
-  quickNavText: { color: '#FFFFFF', fontWeight: '600', fontSize: 13 },
 
-  carouselContainer: { height: 100, marginBottom: 16, justifyContent: 'center' },
+  // Carousel
+  carouselContainer: {
+    height: 100,
+    marginBottom: 16,
+    justifyContent: "center",
+  },
   garmentCard: {
     width: 75,
     height: 100,
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    backgroundColor: "rgba(255, 255, 255, 0.05)",
     borderRadius: 12,
     marginRight: 12,
-    overflow: 'hidden',
+    overflow: "hidden",
     borderWidth: 2,
-    borderColor: 'transparent',
+    borderColor: "transparent",
   },
-  garmentCardSelected: { borderColor: '#8b5cf6' },
-  garmentImage: { width: '100%', height: '100%', resizeMode: 'cover' },
+  garmentCardSelected: { borderColor: "#8b5cf6" },
+  garmentImage: { width: "100%", height: "100%", resizeMode: "cover" },
   checkmarkBadge: {
-    position: 'absolute',
+    position: "absolute",
     top: 4,
     right: 4,
-    backgroundColor: '#8b5cf6',
+    backgroundColor: "#8b5cf6",
     width: 18,
     height: 18,
     borderRadius: 9,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
-  checkmarkText: { color: '#FFFFFF', fontSize: 10, fontWeight: 'bold' },
+  checkmarkText: { color: "#FFFFFF", fontSize: 10, fontWeight: "bold" },
 
-  canvasWrapper: { flex: 1, justifyContent: 'center', marginBottom: 16 },
+  // Canvas
+  canvasWrapper: { flex: 1, justifyContent: "center", marginBottom: 12 },
   mainContainer: {
-    width: '100%',
-    height: '100%',
-    backgroundColor: 'rgba(255, 255, 255, 0.03)',
+    width: "100%",
+    height: "100%",
+    backgroundColor: "rgba(255, 255, 255, 0.03)",
     borderRadius: 20,
     borderWidth: 2,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
-    borderStyle: 'dashed',
-    overflow: 'hidden',
-    alignItems: 'center',
-    justifyContent: 'center',
+    borderColor: "rgba(255, 255, 255, 0.1)",
+    borderStyle: "dashed",
+    overflow: "hidden",
+    alignItems: "center",
+    justifyContent: "center",
   },
   mainContainerSuccess: {
-    borderStyle: 'solid',
-    borderColor: '#8b5cf6',
-    shadowColor: '#8b5cf6',
+    borderStyle: "solid",
+    borderColor: "#8b5cf6",
+    shadowColor: "#8b5cf6",
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
     elevation: 5,
   },
-  placeholder: { alignItems: 'center', padding: 20 },
-  iconText: { fontSize: 40, marginBottom: 12 },
-  uploadText: { color: '#E2E8F0', fontSize: 16, fontWeight: '600', marginBottom: 4 },
-  subUploadText: { color: '#64748b', fontSize: 12 },
-  previewImage: { width: '100%', height: '100%', resizeMode: 'cover' },
-  editOverlay: {
-    position: 'absolute',
-    bottom: 0,
-    width: '100%',
-    backgroundColor: 'rgba(0,0,0,0.6)',
-    paddingVertical: 12,
-    alignItems: 'center',
+  placeholder: { alignItems: "center", padding: 20 },
+  uploadText: {
+    color: "#E2E8F0",
+    fontSize: 16,
+    fontWeight: "600",
+    marginBottom: 4,
   },
-  editOverlayText: { color: '#FFFFFF', fontSize: 14, fontWeight: '500' },
+  subUploadText: { color: "#64748b", fontSize: 12 },
+  previewImage: { width: "100%", height: "100%", resizeMode: "cover" },
 
-  footer: { width: '100%', marginTop: 'auto' },
-  buttonContainer: { width: '100%', borderRadius: 16, overflow: 'hidden' },
+  // ✕ cancel image button (#16)
+  cancelImageBtn: {
+    position: "absolute",
+    top: 10,
+    right: 10,
+    backgroundColor: "rgba(0,0,0,0.6)",
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    justifyContent: "center",
+    alignItems: "center",
+    zIndex: 10,
+  },
+  cancelImageText: { color: "#FFF", fontSize: 14, fontWeight: "bold" },
+
+  editOverlay: {
+    position: "absolute",
+    bottom: 0,
+    width: "100%",
+    backgroundColor: "rgba(0,0,0,0.6)",
+    paddingVertical: 12,
+    alignItems: "center",
+  },
+  editOverlayText: { color: "#FFFFFF", fontSize: 14, fontWeight: "500" },
+
+  // Action button — fully round (#7)
+  footer: { width: "100%", marginBottom: 12 },
+  buttonContainer: {
+    width: "100%",
+    borderRadius: 50, // fully round
+    overflow: "hidden",
+  },
   buttonDisabled: { opacity: 0.7 },
-  gradient: { paddingVertical: 16, justifyContent: 'center', alignItems: 'center' },
-  buttonText: { color: '#FFFFFF', fontSize: 18, fontWeight: 'bold' },
-  buttonTextDisabled: { color: '#9ca3af' },
+  gradient: {
+    paddingVertical: 16,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  buttonText: { color: "#FFFFFF", fontSize: 18, fontWeight: "bold" },
+  buttonTextDisabled: { color: "#9ca3af" },
 
+  // Bottom nav (#4)
+  bottomNav: {
+    flexDirection: "row",
+    gap: 12,
+    marginBottom: 4,
+  },
+  bottomNavBtn: {
+    flex: 1,
+    borderRadius: 16,
+    overflow: "hidden",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.08)",
+  },
+  bottomNavGradient: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 14,
+    gap: 4,
+  },
+  bottomNavIcon: { fontSize: 14 },
+  bottomNavText: { color: "#FFFFFF", fontWeight: "600", fontSize: 12 },
+
+  // Generation overlay (#17)
+  generatingOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(0,0,0,0.75)",
+    justifyContent: "center",
+    alignItems: "center",
+    zIndex: 999,
+  },
+  generatingCard: {
+    backgroundColor: "rgba(255,255,255,0.06)",
+    borderRadius: 24,
+    padding: 36,
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.1)",
+    width: "75%",
+  },
+  generatingTitle: {
+    color: "#FFFFFF",
+    fontSize: 18,
+    fontWeight: "700",
+    marginTop: 20,
+    marginBottom: 8,
+  },
+  generatingSubtitle: { color: "#A0AEC0", fontSize: 13, textAlign: "center" },
+
+  // Camera
   closeCameraBtn: {
-    position: 'absolute',
+    position: "absolute",
     top: 50,
     left: 20,
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    backgroundColor: "rgba(0,0,0,0.5)",
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 20,
   },
-  closeCameraText: { color: '#FFF', fontWeight: 'bold', fontSize: 16 },
-
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.8)',
-    justifyContent: 'flex-end',
-  },
-  modalContent: {
-    backgroundColor: '#0A0F1C',
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    padding: 24,
-    paddingBottom: 40,
-    minHeight: 420,
-    borderTopWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)',
-  },
-  closeModalBtn: { alignSelf: 'flex-end', padding: 8 },
-  closeModalText: { color: '#64748b', fontSize: 20, fontWeight: 'bold' },
-  modalTitle: { color: '#FFF', fontSize: 28, fontWeight: 'bold', marginBottom: 8 },
-  modalSubtitle: { color: '#A0AEC0', fontSize: 16, marginBottom: 24 },
-
-  planScroll: { paddingRight: 24, alignItems: 'center' },
-  planCard: {
-    backgroundColor: 'rgba(255,255,255,0.03)',
-    borderRadius: 16,
-    padding: 20,
-    width: 200,
-    marginRight: 16,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.05)',
-  },
-  planCardPro: {
-    borderColor: '#8b5cf6',
-    backgroundColor: 'rgba(139, 92, 246, 0.1)',
-  },
-  popularBadge: {
-    position: 'absolute',
-    top: -12,
-    right: 16,
-    backgroundColor: 'rgba(255,255,255,0.1)',
-    paddingHorizontal: 12,
-    paddingVertical: 4,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#8b5cf6',
-  },
-  popularText: { color: '#d8b4fe', fontSize: 10, fontWeight: 'bold' },
-
-  planName: { color: '#FFF', fontSize: 20, fontWeight: 'bold', marginBottom: 8 },
-  planPrice: { color: '#FFF', fontSize: 24, fontWeight: '900', marginBottom: 12 },
-  planPoints: { color: '#A0AEC0', fontSize: 14, marginBottom: 24 },
-
-  planBtn: {
-    backgroundColor: 'rgba(255,255,255,0.1)',
-    paddingVertical: 12,
-    borderRadius: 8,
-    alignItems: 'center',
-    minHeight: 44,
-    justifyContent: 'center',
-  },
-  planBtnPro: {
-    backgroundColor: '#8b5cf6',
-    paddingVertical: 12,
-    borderRadius: 8,
-    alignItems: 'center',
-    minHeight: 44,
-    justifyContent: 'center',
-  },
-  planBtnText: { color: '#FFF', fontWeight: 'bold', fontSize: 14 },
-
-  stripeBadge: {
-    color: '#4B5563',
-    fontSize: 12,
-    textAlign: 'center',
-    marginTop: 16,
-  },
+  closeCameraText: { color: "#FFF", fontWeight: "bold", fontSize: 16 },
 });
