@@ -1,0 +1,54 @@
+# ==============================================================
+# Wearify — Requirements
+# Python 3.10 | CUDA 11.8
+# Install PyTorch first (see note below), then: pip install -r requirements.txt
+# ==============================================================
+
+# --------------------------------------------------------------
+# NOTE: Install PyTorch manually before running this file.
+# PyTorch for CUDA 11.8:
+#   pip install torch==2.1.0+cu118 torchvision==0.16.0+cu118 --index-url https://download.pytorch.org/whl/cu118
+# --------------------------------------------------------------
+
+# Core ML / Diffusion
+diffusers>=0.25.0
+transformers>=4.35.0
+accelerate>=0.24.0
+peft>=0.6.0
+safetensors>=0.4.0
+bitsandbytes>=0.41.0
+
+# Image processing
+Pillow>=10.0.0
+opencv-python>=4.8.0
+numpy>=1.24.0
+
+# Evaluation metrics
+torchmetrics>=1.2.0
+lpips>=0.1.4
+
+# Utilities
+tqdm>=4.65.0
+
+# CUDA runtime & cuDNN (required by Parsing.py for ONNX Runtime GPU)
+nvidia-cudnn-cu11>=8.6.0
+nvidia-cuda-runtime-cu11>=11.8.0
+
+# ONNX Runtime (GPU) — required by OOTDiffusion humanparsing
+onnxruntime-gpu>=1.16.0
+
+# --------------------------------------------------------------
+# The following must be installed manually from GitHub
+# as they are not available on PyPI:
+# --------------------------------------------------------------
+
+# Segment Anything Model (SAM):
+#   pip install git+https://github.com/facebookresearch/segment-anything.git
+
+# GroundingDINO:
+#   pip install git+https://github.com/IDEA-Research/GroundingDINO.git
+
+# OOTDiffusion (humanparsing ONNX pipeline):
+#   Clone the repo and follow its setup instructions:
+#   https://github.com/levihsu/OOTDiffusion
+# --------------------------------------------------------------

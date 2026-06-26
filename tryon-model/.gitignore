@@ -1,0 +1,77 @@
+# Virtual environments
+venv/
+.venv/
+
+# Python cache
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+
+# IDE
+.idea/
+.vscode/
+
+# ===== DATASETS =====
+data/
+data(old)/
+dataset_final/
+dataset_final - Copy/
+dataset_final2/
+dataset_manual/
+dataset_new/
+our dataset/
+
+# ===== THIRD PARTY LIBRARIES =====
+detectron2/
+GroundingDINO/
+OOTDiffusion/
+openpose/
+Self-Correction-Human-Parsing/
+CatVTON
+
+# ===== MODEL WEIGHTS =====
+*.pt
+*.pth
+*.bin
+*.onnx
+*.ckpt
+checkpoints/
+
+# ===== OLD SEGFORMER VERSIONS =====
+my_custom_segformer/
+my_custom_segformer_v2/
+my_custom_segformer_v3/
+my_custom_segformer_v5/
+
+# ===== LARGE MEDIA =====
+*.mp4
+*.avi
+*.mov
+
+# ===== POSTMAN =====
+.postman/
+
+# ===== MISC =====
+-p/
+ours/
+own/
+*.log
+
+# ===== OLD SCRIPTS =====
+new Scripts/
+old scripts/
+
+# ===== ROOT FILES =====
+eval.py
+generate.py
+inference_result.jpg
+inference_result1.jpg
+metrics.py
+metrics.txt
+Model.py
+preprocess.py
+Preprocessing.py
+Preprocessing video.mp4
+test.py
+train.py
