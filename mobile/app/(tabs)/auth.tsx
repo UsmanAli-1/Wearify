@@ -1,13 +1,14 @@
 import axios from "axios";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import { API_URL1 } from "@/constants/config";
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { API_URL1 } from '@/constants/config';
 import React, { useState } from "react";
 import {
   ActivityIndicator,
   Image,
   KeyboardAvoidingView,
+  Modal,
   Platform,
   SafeAreaView,
   ScrollView,
@@ -41,15 +42,21 @@ export default function AuthScreen() {
   // Submission loading state
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const showAlert = (
-    title: string,
-    message: string,
-    buttons?: GlassAlertButton[],
-  ) => {
+  // Item 13: Privacy consent modal for new registrations
+  const [privacyVisible, setPrivacyVisible] = useState(false);
+  const [pendingToken, setPendingToken] = useState<string | null>(null);
+  const [pendingUserId, setPendingUserId] = useState<string | null>(null);
+
+  const showAlert = (title: string, message: string, buttons?: GlassAlertButton[]) => {
     setAlertTitle(title);
     setAlertMessage(message);
-    setAlertButtons(buttons ?? [{ text: "OK" }]);
+    setAlertButtons(buttons ?? [{ text: 'OK' }]);
     setAlertVisible(true);
+  };
+
+  // Item 10: Store last-active timestamp on login for session management
+  const recordLoginTime = async () => {
+    await AsyncStorage.setItem('lastActiveTime', Date.now().toString());
   };
 
   const handleAuth = async () => {
@@ -62,35 +69,37 @@ export default function AuthScreen() {
           { headers: { "Bypass-Tunnel-Reminder": "true" } },
         );
 
-        await AsyncStorage.setItem("authToken", response.data.token);
-        await AsyncStorage.setItem(
-          "userId",
-          response.data.user?.id ?? response.data.user?._id ?? "",
-        );
+        await AsyncStorage.setItem('authToken', response.data.token);
+        await AsyncStorage.setItem('userId', response.data.user?.id ?? response.data.user?._id ?? '');
+        await recordLoginTime();
 
-        showAlert("Welcome back! 👋", "You've successfully signed in.", [
-          {
-            text: "Let's Go",
-            onPress: () => router.replace("/dashboard"),
-          },
-        ]);
+        showAlert("Welcome back! 👋", "You've successfully signed in.", [{
+          text: "Let's Go",
+          onPress: () => router.replace("/dashboard"),
+        }]);
+
       } else {
+        // Item 13: After sign-up, show privacy consent before proceeding
         await axios.post(
           `${API_URL1}/`,
           { name, email: email.toLowerCase(), phone, password },
           { headers: { "Bypass-Tunnel-Reminder": "true" } },
         );
 
-        showAlert(
-          "Account Created! 🎉",
-          "You can now log in with your credentials.",
-          [
-            {
-              text: "Sign In",
-              onPress: () => setIsLogin(true),
-            },
-          ],
+        // Auto-login after register to get the token
+        const loginRes = await axios.post(
+          `${API_URL1}/login`,
+          { email: email.toLowerCase(), password },
+          { headers: { "Bypass-Tunnel-Reminder": "true" } },
         );
+
+        const token = loginRes.data.token;
+        const userId = loginRes.data.user?.id ?? loginRes.data.user?._id ?? '';
+
+        // Store temporarily, show privacy modal before navigating
+        setPendingToken(token);
+        setPendingUserId(userId);
+        setPrivacyVisible(true);
       }
     } catch (error) {
       let errorMessage = "Cannot connect to server.";
@@ -105,6 +114,27 @@ export default function AuthScreen() {
     }
   };
 
+  const handlePrivacyAgree = async () => {
+    if (pendingToken && pendingUserId) {
+      await AsyncStorage.setItem('authToken', pendingToken);
+      await AsyncStorage.setItem('userId', pendingUserId);
+      await AsyncStorage.setItem('privacyAccepted', 'true');
+      await recordLoginTime();
+    }
+    setPrivacyVisible(false);
+    router.replace("/dashboard");
+  };
+
+  const handlePrivacyDecline = async () => {
+    setPrivacyVisible(false);
+    setPendingToken(null);
+    setPendingUserId(null);
+    showAlert(
+      "Account Declined",
+      "You must accept the privacy policy to use Wearify. Your account has not been activated.",
+    );
+  };
+
   return (
     <LinearGradient
       colors={["#1c103f", "#080d1a", "#080d1a", "#2d1445"]}
@@ -113,17 +143,8 @@ export default function AuthScreen() {
       style={styles.backgroundGradient}
     >
       <Starfield />
+      {/* Item 4: Center form vertically */}
       <SafeAreaView style={styles.container}>
-        <Image
-          source={require("../../assets/images/logo1.png")}
-          style={{
-            width: 64,
-            height: 64,
-            resizeMode: "contain",
-            marginTop: 32,
-            marginLeft: 20,
-          }}
-        />
         <KeyboardAvoidingView
           behavior={Platform.OS === "ios" ? "padding" : "height"}
           style={styles.keyboardView}
@@ -131,7 +152,14 @@ export default function AuthScreen() {
           <ScrollView
             showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps="handled"
+            contentContainerStyle={styles.scrollContent}
           >
+            <Image
+              source={require("../../assets/images/logo1.png")}
+              style={styles.logo}
+              resizeMode="contain"
+            />
+
             <View style={styles.headerContainer}>
               <Text style={styles.title}>
                 {isLogin ? "Sign In" : "Sign Up"}
@@ -192,10 +220,7 @@ export default function AuthScreen() {
               </View>
 
               <TouchableOpacity
-                style={[
-                  styles.buttonContainer,
-                  isSubmitting && styles.buttonDisabled,
-                ]}
+                style={[styles.buttonContainer, isSubmitting && styles.buttonDisabled]}
                 onPress={handleAuth}
                 disabled={isSubmitting}
               >
@@ -225,9 +250,7 @@ export default function AuthScreen() {
                 onPress={() => setIsLogin(!isLogin)}
               >
                 <Text style={styles.toggleText}>
-                  {isLogin
-                    ? "Don't have an account? "
-                    : "Already have an account? "}
+                  {isLogin ? "Don't have an account? " : "Already have an account? "}
                   <Text style={styles.toggleHighlight}>
                     {isLogin ? "Sign Up" : "Sign In"}
                   </Text>
@@ -237,6 +260,53 @@ export default function AuthScreen() {
           </ScrollView>
         </KeyboardAvoidingView>
       </SafeAreaView>
+
+      {/* Item 13: Privacy Consent Modal */}
+      <Modal visible={privacyVisible} transparent animationType="fade">
+        <View style={styles.privacyOverlay}>
+          <View style={styles.privacyCard}>
+            <Text style={styles.privacyTitle}>Your Privacy Matters 🛡️</Text>
+            <Text style={styles.privacySubtitle}>
+              Before using our Virtual Try-On feature, please read and agree to the following:
+            </Text>
+
+            {[
+              "Your photos are used only for try-on generation",
+              "We never share your photos with third parties",
+              "Your data is stored securely on our servers",
+              "Only you can see your generated results",
+            ].map((point, i) => (
+              <View key={i} style={styles.privacyPoint}>
+                <Text style={styles.privacyCheck}>✓</Text>
+                <Text style={styles.privacyPointText}>{point}</Text>
+              </View>
+            ))}
+
+            <Text style={styles.privacyNote}>
+              By clicking <Text style={{ fontWeight: '700' }}>&quot;I Agree&quot;</Text>, you give Wearify
+              permission to process your uploaded photos for virtual try-on purposes only.
+            </Text>
+
+            <View style={styles.privacyButtons}>
+              <TouchableOpacity style={styles.declineBtn} onPress={handlePrivacyDecline}>
+                <Text style={styles.declineBtnText}>Decline</Text>
+              </TouchableOpacity>
+              <TouchableOpacity onPress={handlePrivacyAgree}>
+                <LinearGradient
+                  colors={["#8b5cf6", "#3b82f6"]}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                  style={styles.agreeBtn}
+                >
+                  <Text style={styles.agreeBtnText}>I Agree</Text>
+                </LinearGradient>
+              </TouchableOpacity>
+            </View>
+
+            <Text style={styles.privacyWarning}>Declining will sign you out of your account</Text>
+          </View>
+        </View>
+      </Modal>
 
       {/* Glassmorphism Alert */}
       <GlassAlert
@@ -253,13 +323,21 @@ export default function AuthScreen() {
 const styles = StyleSheet.create({
   backgroundGradient: { flex: 1 },
   container: { flex: 1, backgroundColor: "transparent" },
-  keyboardView: { flex: 1, padding: 20, paddingTop: 0 },
-  headerContainer: { marginBottom: 0, marginTop: 30 },
+  keyboardView: { flex: 1 },
+  // Item 4: Center vertically
+  scrollContent: {
+    flexGrow: 1,
+    justifyContent: "center",
+    padding: 20,
+    paddingVertical: 40,
+  },
+  logo: { width: 64, height: 64, resizeMode: 'contain', marginBottom: 8, alignSelf: 'flex-start' },
+  headerContainer: { marginBottom: 16 },
   title: {
     fontSize: 32,
     fontWeight: "bold",
     color: "#8b5cf6",
-    marginBottom: 8,
+    marginBottom: 4,
   },
   card: {
     backgroundColor: "rgba(255, 255, 255, 0.03)",
@@ -282,7 +360,7 @@ const styles = StyleSheet.create({
   buttonContainer: {
     width: "100%",
     marginTop: 12,
-    borderRadius: 12,
+    borderRadius: 50,
     overflow: "hidden",
   },
   buttonDisabled: { opacity: 0.7 },
@@ -300,4 +378,77 @@ const styles = StyleSheet.create({
   toggleContainer: { marginTop: 24, alignItems: "center" },
   toggleText: { color: "#A0AEC0", fontSize: 14 },
   toggleHighlight: { color: "#8b5cf6", fontWeight: "600" },
+
+  // Privacy modal
+  privacyOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.8)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 24,
+  },
+  privacyCard: {
+    backgroundColor: '#0f1629',
+    borderRadius: 20,
+    padding: 24,
+    width: '100%',
+    borderWidth: 1,
+    borderColor: 'rgba(139,92,246,0.3)',
+  },
+  privacyTitle: {
+    color: '#FFFFFF',
+    fontSize: 20,
+    fontWeight: '800',
+    textAlign: 'center',
+    marginBottom: 12,
+  },
+  privacySubtitle: {
+    color: '#CBD5E1',
+    fontSize: 13,
+    marginBottom: 16,
+    lineHeight: 20,
+  },
+  privacyPoint: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginBottom: 10,
+    gap: 10,
+  },
+  privacyCheck: { color: '#10b981', fontSize: 16, fontWeight: '700' },
+  privacyPointText: { color: '#E2E8F0', fontSize: 13, flex: 1, lineHeight: 20 },
+  privacyNote: {
+    color: '#94A3B8',
+    fontSize: 12,
+    textAlign: 'center',
+    marginTop: 16,
+    marginBottom: 20,
+    lineHeight: 18,
+  },
+  privacyButtons: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  declineBtn: {
+    flex: 1,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.15)',
+    paddingVertical: 14,
+    alignItems: 'center',
+  },
+  declineBtnText: { color: '#CBD5E1', fontWeight: '600' },
+  agreeBtn: {
+    flex: 1,
+    borderRadius: 12,
+    paddingVertical: 14,
+    alignItems: 'center',
+    minWidth: 120,
+  },
+  agreeBtnText: { color: '#FFFFFF', fontWeight: '700' },
+  privacyWarning: {
+    color: '#64748b',
+    fontSize: 11,
+    textAlign: 'center',
+    marginTop: 12,
+  },
 });

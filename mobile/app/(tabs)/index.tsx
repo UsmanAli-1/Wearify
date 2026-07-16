@@ -1,7 +1,7 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
-import "react-native-reanimated";
+import 'react-native-reanimated';
 import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
@@ -21,23 +21,35 @@ export default function WelcomeScreen() {
   useEffect(() => {
     (async () => {
       try {
-        const [hasSeenOnboarding, authToken] = await Promise.all([
+        const [hasSeenOnboarding, authToken, lastActiveStr] = await Promise.all([
           AsyncStorage.getItem("hasSeenOnboarding"),
           AsyncStorage.getItem("authToken"),
+          AsyncStorage.getItem("lastActiveTime"),
         ]);
 
         if (hasSeenOnboarding === "true") {
-          // Returning user — skip the welcome screen entirely.
           if (authToken) {
-            router.replace("/dashboard");
+            // Item 10: Check session expiry.
+            // If app was closed > 15min ago, force re-login.
+            const lastActive = lastActiveStr ? parseInt(lastActiveStr) : 0;
+            const elapsed = Date.now() - lastActive;
+            const FIFTEEN_MIN = 15 * 60 * 1000;
+
+            if (elapsed > FIFTEEN_MIN) {
+              await AsyncStorage.multiRemove(['authToken', 'userId', 'lastActiveTime']);
+              router.replace("/auth");
+            } else {
+              // Update last active time
+              await AsyncStorage.setItem('lastActiveTime', Date.now().toString());
+              router.replace("/dashboard");
+            }
           } else {
             router.replace("/auth");
           }
           return;
         }
       } catch {
-        // If AsyncStorage fails for any reason, fall back to showing
-        // the welcome screen as before.
+        // fall through to show welcome screen
       } finally {
         setChecking(false);
       }

@@ -17,13 +17,14 @@ import {
   View,
 } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
-import { useGlassAlert } from "@/components/GlassAlert";
+import { useGlassAlert } from "../components/GlassAlert";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 interface TryOnRecord {
   _id: string;
-  imagePath: string; // generated result image (Cloudinary)
+  imagePath: string;           // generated result image (Cloudinary)
+  resultImageUrl?: string;     // alternate field name some backends use
   createdAt: string;
   garment?: {
     _id: string | null;
@@ -58,9 +59,7 @@ export default function TryOnHistoryScreen() {
 
   const [records, setRecords] = useState<TryOnRecord[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [selectedRecord, setSelectedRecord] = useState<TryOnRecord | null>(
-    null,
-  );
+  const [selectedRecord, setSelectedRecord] = useState<TryOnRecord | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
   // ── Fetch history whenever screen is focused ─────────────────────────────────
@@ -83,7 +82,7 @@ export default function TryOnHistoryScreen() {
   useFocusEffect(
     useCallback(() => {
       fetchHistory();
-    }, [fetchHistory]),
+    }, [fetchHistory])
   );
 
   // ── Delete ───────────────────────────────────────────────────────────────────
@@ -113,7 +112,7 @@ export default function TryOnHistoryScreen() {
             }
           },
         },
-      ],
+      ]
     );
   };
 
@@ -131,8 +130,8 @@ export default function TryOnHistoryScreen() {
         activeOpacity={0.85}
         disabled={isDeleting}
       >
-        {/* Main generated image */}
-        <Image source={{ uri: item.imagePath }} style={styles.cardImage} />
+        {/* Main generated/result image — prefer resultImageUrl if present */}
+        <Image source={{ uri: item.resultImageUrl ?? item.imagePath }} style={styles.cardImage} />
 
         {/* Garment thumbnail overlay (top right) */}
         {garmentThumb && (
@@ -197,10 +196,7 @@ export default function TryOnHistoryScreen() {
       <SafeAreaView style={styles.container}>
         {/* Header — heading removed (#14) */}
         <View style={styles.header}>
-          <TouchableOpacity
-            onPress={() => router.back()}
-            style={styles.backBtn}
-          >
+          <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
             <Text style={styles.backBtnText}>← Back</Text>
           </TouchableOpacity>
           <View style={styles.countBadge}>
@@ -252,7 +248,7 @@ export default function TryOnHistoryScreen() {
 
                 {/* Generated image */}
                 <Image
-                  source={{ uri: selectedRecord.imagePath }}
+                  source={{ uri: selectedRecord.resultImageUrl ?? selectedRecord.imagePath }}
                   style={styles.modalImage}
                   resizeMode="contain"
                 />
@@ -264,12 +260,9 @@ export default function TryOnHistoryScreen() {
                   </Text>
 
                   {/* Garment used */}
-                  {(selectedRecord.garment ??
-                    selectedRecord.garmentImagePath) && (
+                  {(selectedRecord.garment ?? selectedRecord.garmentImagePath) && (
                     <View style={styles.modalGarmentRow}>
-                      <Text style={styles.modalGarmentLabel}>
-                        Garment used:
-                      </Text>
+                      <Text style={styles.modalGarmentLabel}>Garment used:</Text>
                       <Image
                         source={{
                           uri: (() => {
@@ -293,9 +286,7 @@ export default function TryOnHistoryScreen() {
                   style={styles.deleteBtn}
                   onPress={() => handleDelete(selectedRecord)}
                 >
-                  <Text style={styles.deleteBtnText}>
-                    🗑 Delete This Try-On
-                  </Text>
+                  <Text style={styles.deleteBtnText}>🗑 Delete This Try-On</Text>
                 </TouchableOpacity>
               </>
             )}
@@ -343,12 +334,7 @@ const styles = StyleSheet.create({
   },
   countText: { color: "#d8b4fe", fontWeight: "bold", fontSize: 13 },
 
-  loadingContainer: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 16,
-  },
+  loadingContainer: { flex: 1, alignItems: "center", justifyContent: "center", gap: 16 },
   loadingText: { color: "#A0AEC0", fontSize: 14 },
 
   listContent: { paddingHorizontal: 16, paddingBottom: 30 },
@@ -391,25 +377,10 @@ const styles = StyleSheet.create({
   cardDate: { color: "#A0AEC0", fontSize: 11 },
 
   // Empty state
-  emptyContainer: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    padding: 40,
-  },
+  emptyContainer: { flex: 1, alignItems: "center", justifyContent: "center", padding: 40 },
   emptyIcon: { fontSize: 64, marginBottom: 16 },
-  emptyTitle: {
-    color: "#FFFFFF",
-    fontSize: 22,
-    fontWeight: "bold",
-    marginBottom: 8,
-  },
-  emptySubtitle: {
-    color: "#64748b",
-    fontSize: 14,
-    textAlign: "center",
-    marginBottom: 32,
-  },
+  emptyTitle: { color: "#FFFFFF", fontSize: 22, fontWeight: "bold", marginBottom: 8 },
+  emptySubtitle: { color: "#64748b", fontSize: 14, textAlign: "center", marginBottom: 32 },
   emptyBtn: { width: "100%", borderRadius: 14, overflow: "hidden" },
   emptyBtnGradient: { paddingVertical: 14, alignItems: "center" },
   emptyBtnText: { color: "#FFF", fontWeight: "bold", fontSize: 15 },

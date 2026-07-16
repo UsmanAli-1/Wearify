@@ -3,11 +3,12 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import axios from "axios";
 import * as ImagePicker from "expo-image-picker";
 import { LinearGradient } from "expo-linear-gradient";
-import { useRouter } from "expo-router";
-import React, { useState } from "react";
+import { useFocusEffect, useRouter } from "expo-router";
+import React, { useCallback, useState } from "react";
 import {
   Dimensions,
   Image,
+  Modal,
   SafeAreaView,
   ScrollView,
   StyleSheet,
@@ -25,7 +26,7 @@ import Animated, {
   withSequence,
   withTiming,
 } from "react-native-reanimated";
-import { useGlassAlert } from "@/components/GlassAlert";
+import { useGlassAlert } from "../components/GlassAlert";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -70,10 +71,7 @@ function SkeletonCard({ delay = 0 }: { delay?: number }) {
   const animatedStyle = useAnimatedStyle(() => ({ opacity: opacity.value }));
 
   return (
-    <Animated.View
-      entering={FadeIn.delay(delay).duration(300)}
-      style={styles.skeletonCard}
-    >
+    <Animated.View entering={FadeIn.delay(delay).duration(300)} style={styles.skeletonCard}>
       <Animated.View style={[styles.skeletonShimmer, animatedStyle]} />
       <Text style={styles.skeletonText}>Finding...</Text>
     </Animated.View>
@@ -87,9 +85,27 @@ export default function AISuggestionScreen() {
   const { show: showAlert, element: alertElement } = useGlassAlert();
 
   const [step, setStep] = useState<Step>("upload");
+  const [points, setPoints] = useState<number | null>(null);
+  const [modalVisible, setModalVisible] = useState(false);
   const [gender, setGender] = useState<Gender>("male");
   const [personImage, setPersonImage] = useState<string | null>(null);
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
+
+  // ── Fetch points on focus ───────────────────────────────────────────────────
+  useFocusEffect(
+    useCallback(() => {
+      (async () => {
+        try {
+          const token = await getAuthToken();
+          if (!token) return;
+          const { data } = await axios.get(`${API_URL}/users/me`, {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          setPoints(data.points ?? 0);
+        } catch { /* non-fatal */ }
+      })();
+    }, [])
+  );
 
   // ── Image picker ────────────────────────────────────────────────────────────
 
@@ -147,23 +163,23 @@ export default function AISuggestionScreen() {
             "Content-Type": "multipart/form-data",
           },
           timeout: 90000,
-        },
+        }
       );
 
       setSuggestions(data.suggestions ?? []);
       setStep("results");
+      setModalVisible(true);
     } catch (err: any) {
       setStep("upload");
 
       const msg =
-        err?.response?.data?.message ??
-        "Something went wrong. Please try again.";
+        err?.response?.data?.message ?? "Something went wrong. Please try again.";
 
       if (msg.includes("full-body") || msg.includes("full body")) {
         showAlert(
           "Full Body Required 📸",
           "Please upload a clear head-to-toe photo so we can analyze your skin tone accurately.\n\nTips:\n• Stand in good lighting\n• Make sure your full body is visible\n• Avoid cropped or close-up shots",
-          [{ text: "Try Again" }],
+          [{ text: "Try Again" }]
         );
       } else if (msg.includes("points") || msg.includes("Points")) {
         showAlert(
@@ -172,7 +188,7 @@ export default function AISuggestionScreen() {
           [
             { text: "Cancel", style: "cancel" },
             { text: "Top Up", onPress: () => router.back() },
-          ],
+          ]
         );
       } else {
         showAlert("Error", msg);
@@ -184,11 +200,13 @@ export default function AISuggestionScreen() {
     setStep("upload");
     setPersonImage(null);
     setSuggestions([]);
+    setModalVisible(false);
   };
 
   // ── Tap a suggestion → go to dashboard try-on with this garment + photo (#12) ──
 
   const handleSelectSuggestion = (item: Suggestion) => {
+    setModalVisible(false);
     router.push({
       pathname: "/dashboard",
       params: {
@@ -203,15 +221,9 @@ export default function AISuggestionScreen() {
   // ── Render helpers ───────────────────────────────────────────────────────────
 
   const renderUploadStep = () => (
-    <ScrollView
-      showsVerticalScrollIndicator={false}
-      contentContainerStyle={{ flexGrow: 1 }}
-    >
+    <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ flexGrow: 1 }}>
       {/* Person image area — increased size (#10) */}
-      <Animated.View
-        entering={FadeIn.duration(350)}
-        style={styles.uploadBoxWrapper}
-      >
+      <Animated.View entering={FadeIn.duration(350)} style={styles.uploadBoxWrapper}>
         <TouchableOpacity
           style={styles.uploadBox}
           onPress={handlePickImage}
@@ -219,14 +231,8 @@ export default function AISuggestionScreen() {
         >
           {personImage ? (
             <View style={{ flex: 1, width: "100%" }}>
-              <Image
-                source={{ uri: personImage }}
-                style={styles.personPreview}
-              />
-              <TouchableOpacity
-                style={styles.removeBtn}
-                onPress={handleRemoveImage}
-              >
+              <Image source={{ uri: personImage }} style={styles.personPreview} />
+              <TouchableOpacity style={styles.removeBtn} onPress={handleRemoveImage}>
                 <Text style={styles.removeBtnText}>✕</Text>
               </TouchableOpacity>
             </View>
@@ -234,9 +240,7 @@ export default function AISuggestionScreen() {
             <View style={styles.uploadPlaceholder}>
               <Text style={styles.uploadTitle}>Upload Image</Text>
               <View style={styles.uploadHint}>
-                <Text style={styles.uploadHintText}>
-                  Tap to select from gallery
-                </Text>
+                <Text style={styles.uploadHintText}>Tap to select from gallery</Text>
               </View>
             </View>
           )}
@@ -244,17 +248,11 @@ export default function AISuggestionScreen() {
       </Animated.View>
 
       {/* Gender selector */}
-      <Animated.View
-        entering={FadeInUp.delay(100).duration(350)}
-        style={styles.genderContainer}
-      >
+      <Animated.View entering={FadeInUp.delay(100).duration(350)} style={styles.genderContainer}>
         <Text style={styles.sectionLabel}>Select Gender</Text>
         <View style={styles.genderRow}>
           <TouchableOpacity
-            style={[
-              styles.genderBtn,
-              gender === "male" && styles.genderBtnActive,
-            ]}
+            style={[styles.genderBtn, gender === "male" && styles.genderBtnActive]}
             onPress={() => setGender("male")}
           >
             <Text style={styles.genderIcon}>♂</Text>
@@ -296,9 +294,7 @@ export default function AISuggestionScreen() {
           disabled={!personImage}
         >
           <LinearGradient
-            colors={
-              personImage ? ["#8b5cf6", "#3b82f6"] : ["#1f2937", "#1f2937"]
-            }
+            colors={personImage ? ["#8b5cf6", "#3b82f6"] : ["#1f2937", "#1f2937"]}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 0 }}
             style={styles.suggestBtnGradient}
@@ -317,10 +313,7 @@ export default function AISuggestionScreen() {
       {personImage && (
         <View style={styles.loadingPersonRow}>
           <View style={styles.loadingPersonCard}>
-            <Image
-              source={{ uri: personImage }}
-              style={styles.loadingPersonImage}
-            />
+            <Image source={{ uri: personImage }} style={styles.loadingPersonImage} />
             <View style={styles.loadingPersonOverlay}>
               <Text style={styles.loadingPersonOverlayIcon}>⬆</Text>
             </View>
@@ -343,10 +336,7 @@ export default function AISuggestionScreen() {
 
   const renderResultsStep = () => (
     <ScrollView showsVerticalScrollIndicator={false}>
-      <Animated.Text
-        entering={FadeIn.duration(300)}
-        style={styles.suggestionsTitle}
-      >
+      <Animated.Text entering={FadeIn.duration(300)} style={styles.suggestionsTitle}>
         {suggestions.length > 0
           ? `${suggestions.length} Outfits Matched For You`
           : "No outfits found for your profile"}
@@ -355,10 +345,7 @@ export default function AISuggestionScreen() {
       {suggestions.length > 0 ? (
         <View style={styles.grid}>
           {suggestions.map((item, i) => (
-            <Animated.View
-              key={item._id}
-              entering={FadeInUp.delay(i * 60).duration(300)}
-            >
+            <Animated.View key={item._id} entering={FadeInUp.delay(i * 60).duration(300)}>
               <TouchableOpacity
                 style={styles.garmentCard}
                 onPress={() => handleSelectSuggestion(item)}
@@ -370,7 +357,7 @@ export default function AISuggestionScreen() {
                       ? item.imagePath
                       : `${API_URL.replace("/api", "")}/${item.imagePath.replace(
                           /\\/g,
-                          "/",
+                          "/"
                         )}`,
                   }}
                   style={styles.garmentImage}
@@ -409,24 +396,99 @@ export default function AISuggestionScreen() {
     >
       <SafeAreaView style={styles.container}>
         {/* Header — heading removed (#10), just back button */}
-        <Animated.View
-          entering={FadeInDown.duration(300)}
-          style={styles.header}
-        >
-          <TouchableOpacity
-            onPress={() => router.back()}
-            style={styles.backBtn}
-          >
+        <Animated.View entering={FadeInDown.duration(300)} style={styles.header}>
+          <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
             <Text style={styles.backBtnText}>← Back</Text>
           </TouchableOpacity>
+          <View style={styles.pointsBadge}>
+            <Text style={styles.pointsBadgeText}>
+              💎 {points === null ? '...' : points}
+            </Text>
+          </View>
         </Animated.View>
 
         <View style={styles.content}>
-          {step === "upload" && renderUploadStep()}
-          {step === "loading" && renderLoadingStep()}
-          {step === "results" && renderResultsStep()}
+          {renderUploadStep()}
         </View>
       </SafeAreaView>
+
+      {/* Bottom sheet modal for loading + results */}
+      <Modal
+        visible={step === "loading" || modalVisible}
+        transparent
+        animationType="slide"
+        onRequestClose={() => { if (step === "results") { setModalVisible(false); setStep("upload"); } }}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalSheet}>
+            {/* Handle bar */}
+            <View style={styles.modalHandle} />
+
+            {step === "loading" && (
+              <View style={styles.modalLoadingSection}>
+                <Text style={styles.modalTitle}>Finding Your Outfits...</Text>
+                <View style={styles.skeletonGridModal}>
+                  {[0, 1, 2, 3].map((i) => (
+                    <SkeletonCard key={i} delay={i * 100} />
+                  ))}
+                </View>
+                <Text style={styles.analyzingText}>✨ Analyzing your photo...</Text>
+              </View>
+            )}
+
+            {step === "results" && (
+              <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 24 }}>
+                <View style={styles.modalResultsHeader}>
+                  <Text style={styles.modalTitle}>
+                    {suggestions.length > 0
+                      ? `${suggestions.length} Outfits Matched For You`
+                      : "No outfits found"}
+                  </Text>
+                  <TouchableOpacity onPress={handleReset} style={styles.modalCloseBtn}>
+                    <Text style={styles.modalCloseBtnText}>✕</Text>
+                  </TouchableOpacity>
+                </View>
+
+                {suggestions.length > 0 ? (
+                  <View style={styles.grid}>
+                    {suggestions.map((item, i) => (
+                      <Animated.View key={item._id} entering={FadeInUp.delay(i * 60).duration(300)}>
+                        <TouchableOpacity
+                          style={styles.garmentCard}
+                          onPress={() => handleSelectSuggestion(item)}
+                          activeOpacity={0.85}
+                        >
+                          <Image
+                            source={{
+                              uri: item.imagePath.startsWith("http")
+                                ? item.imagePath
+                                : `${API_URL.replace("/api", "")}/${item.imagePath.replace(/\\/g, "/")}`,
+                            }}
+                            style={styles.garmentImage}
+                            resizeMode="cover"
+                          />
+                          <View style={styles.garmentInfo}>
+                            <Text style={styles.garmentColor}>{item.color}</Text>
+                          </View>
+                        </TouchableOpacity>
+                      </Animated.View>
+                    ))}
+                  </View>
+                ) : (
+                  <View style={styles.emptyResults}>
+                    <Text style={styles.emptyResultsIcon}>👗</Text>
+                    <Text style={styles.emptyResultsText}>No outfits available right now.</Text>
+                  </View>
+                )}
+
+                <TouchableOpacity style={styles.tryAgainBtn} onPress={handleReset}>
+                  <Text style={styles.tryAgainText}>🔄 Try Another Photo</Text>
+                </TouchableOpacity>
+              </ScrollView>
+            )}
+          </View>
+        </View>
+      </Modal>
 
       {alertElement}
     </LinearGradient>
@@ -441,8 +503,9 @@ const styles = StyleSheet.create({
   content: { flex: 1, paddingHorizontal: 20, paddingBottom: 20 },
 
   header: {
-    flexDirection: "row",
-    alignItems: "center",
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     paddingHorizontal: 20,
     paddingVertical: 12,
     marginBottom: 4,
@@ -457,6 +520,15 @@ const styles = StyleSheet.create({
     borderColor: "rgba(139, 92, 246, 0.3)",
   },
   backBtnText: { color: "#8b5cf6", fontWeight: "600", fontSize: 14 },
+  pointsBadge: {
+    backgroundColor: 'rgba(139,92,246,0.2)',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: 'rgba(139,92,246,0.5)',
+  },
+  pointsBadgeText: { color: '#FFFFFF', fontWeight: 'bold', fontSize: 14 },
 
   // Upload step — bigger image (#10)
   uploadBoxWrapper: { flex: 1, marginBottom: 16, minHeight: 420 },
@@ -628,14 +700,61 @@ const styles = StyleSheet.create({
   },
   garmentImage: { width: "100%", height: CARD_SIZE * 1.3 },
   garmentInfo: { padding: 10 },
-  garmentColor: {
-    color: "#A0AEC0",
-    fontSize: 12,
-    fontWeight: "600",
-    textTransform: "capitalize",
-  },
+  garmentColor: { color: "#A0AEC0", fontSize: 12, fontWeight: "600", textTransform: "capitalize" },
 
   emptyResults: { alignItems: "center", padding: 40 },
+
+  // Modal styles (item 8)
+  modalOverlay: {
+    flex: 1,
+    justifyContent: 'flex-end',
+    backgroundColor: 'rgba(0,0,0,0.55)',
+  },
+  modalSheet: {
+    backgroundColor: '#0f1629',
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
+    paddingHorizontal: 20,
+    paddingTop: 12,
+    paddingBottom: 20,
+    maxHeight: '82%',
+    borderWidth: 1,
+    borderColor: 'rgba(139,92,246,0.2)',
+  },
+  modalHandle: {
+    width: 40, height: 4,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    borderRadius: 2,
+    alignSelf: 'center',
+    marginBottom: 16,
+  },
+  modalTitle: {
+    color: '#FFFFFF',
+    fontSize: 18,
+    fontWeight: '800',
+    flex: 1,
+  },
+  modalResultsHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  modalCloseBtn: {
+    width: 32, height: 32, borderRadius: 16,
+    backgroundColor: 'rgba(255,255,255,0.08)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalCloseBtnText: { color: '#CBD5E1', fontSize: 14, fontWeight: '700' },
+  modalLoadingSection: { alignItems: 'center', paddingVertical: 8 },
+  skeletonGridModal: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 10,
+    marginTop: 16,
+    marginBottom: 16,
+    width: '100%',
+  },
   emptyResultsIcon: { fontSize: 48, marginBottom: 16 },
   emptyResultsText: { color: "#64748b", fontSize: 14, textAlign: "center" },
 
