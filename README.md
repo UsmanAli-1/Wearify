@@ -1,6 +1,6 @@
 # Wearify – AI Virtual Try-On Platform
 
-Wearify is an **AI-powered Virtual Try-On platform** that allows users to digitally try garments on their own photos before making clothing decisions. The system uses deep learning models to intelligently place garments on a user's uploaded image and generate realistic results.
+Wearify is an **AI-powered Virtual Try-On platform** that allows users to digitally try garments on their own photos before making clothing decisions. The system uses deep learning models to intelligently place garments on a user's uploaded image and generate realistic results .
 
 This project was developed as a **Final Year Project (FYP)** and combines modern web technologies with computer vision and deep learning techniques.
 
